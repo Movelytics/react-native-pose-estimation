@@ -12,10 +12,11 @@
 
 import { Platform } from 'react-native';
 
+import { SDK_VERSION } from '../sdkVersion';
 import type { ConfigureRequest, PoseModelProfile, SdkManifest } from '../types/manifest';
 
 export const SDK_NAME = 'posetracker-rn' as const;
-export const SDK_VERSION = '0.1.1';
+export { SDK_VERSION };
 
 /** Overridable for staging/self-hosted backends. */
 export const DEFAULT_BASE_URL =

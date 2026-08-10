@@ -9,9 +9,10 @@
  * pose-runtime descriptor only, no session/engine/exercises. This is how
  * keypoints-only installs bootstrap the pose estimation payload.
  */
+import { SDK_VERSION } from '../sdkVersion';
 import type { ConfigureRequest, PoseModelProfile, SdkManifest } from '../types/manifest';
 export declare const SDK_NAME: "posetracker-rn";
-export declare const SDK_VERSION = "0.1.1";
+export { SDK_VERSION };
 /** Overridable for staging/self-hosted backends. */
 export declare const DEFAULT_BASE_URL = "https://movelytics-strapi-c78a339b7070.herokuapp.com";
 export interface ConfigureOptions {

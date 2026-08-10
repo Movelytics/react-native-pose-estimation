@@ -21,6 +21,13 @@ Versions follow [SemVer](https://semver.org/).
 - Hermes-safe engine bundle (Babel after esbuild)
 - WebView parity: grades A–F, nested `counter.form_score`, classic angles
 
+## [0.1.3] — 2026-08-10
+
+### Fixed
+
+- `SDK_VERSION` handshake now tracks `package.json` (was stuck on 0.1.1)
+- npm tarball no longer ships duplicate `bundledRuntimeAssets.js` in `src/` (~9 MB saved); Metro uses `lib/`
+
 ## [0.1.2] — 2026-08-10
 
 ### Changed

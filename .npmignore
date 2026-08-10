@@ -1,6 +1,9 @@
 # Keep publish tarball lean — `files` in package.json is the allow-list;
 # this denies common junk if someone widens `files`.
 
+# ~9 MB asset lives in lib/ only (react-native entry → lib/index.js)
+src/backends/webview/bundledRuntimeAssets.js
+
 node_modules/
 **/node_modules/
 dist-runtime/
