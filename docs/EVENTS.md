@@ -11,7 +11,7 @@ messages.
 ### A. Typed callbacks (recommended for new apps)
 
 ```tsx
-import { usePoseTracker } from '@posetracker-tracker/react-native-pose-estimation';
+import { usePoseTracker } from '@pose-tracker/react-native-pose-estimation';
 
 function TrackingScreen() {
   usePoseTracker({

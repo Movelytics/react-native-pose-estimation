@@ -1,5 +1,5 @@
 /**
- * @posetracker-tracker/react-native-pose-estimation — public API surface.
+ * @pose-tracker/react-native-pose-estimation — public API surface.
  *
  * Pose runtime (TF.js + MoveNet + pipeline wasm + page runtime) is **bundled**
  * in the package for instant offline cold start. The movement engine is

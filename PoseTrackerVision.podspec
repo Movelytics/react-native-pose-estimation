@@ -5,7 +5,7 @@ package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
 Pod::Spec.new do |s|
   s.name         = 'PoseTrackerVision'
   s.version      = package['version']
-  s.summary      = 'Apple Vision body-pose frame processor for @posetracker-tracker/react-native-pose-estimation'
+  s.summary      = 'Apple Vision body-pose frame processor for @pose-tracker/react-native-pose-estimation'
   s.homepage     = 'https://posetracker.com'
   s.license      = package['license']
   s.authors      = package['author']

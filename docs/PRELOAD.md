@@ -1,7 +1,7 @@
 # Preload & warm-up lifecycle
 
 How and when the SDK loads MoveNet / the WebView runtime. For integrators
-using `@posetracker-tracker/react-native-pose-estimation`.
+using `@pose-tracker/react-native-pose-estimation`.
 
 **Camera permissions are required for live tracking** and must be declared
 by the host app — see [`PERMISSIONS.md`](PERMISSIONS.md). Basic cold-start

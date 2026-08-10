@@ -1,7 +1,7 @@
 # Adaptive camera quality & crash-loop guard
 
 English developer reference for
-`@posetracker-tracker/react-native-pose-estimation`.
+`@pose-tracker/react-native-pose-estimation`.
 
 This document describes how the SDK picks and adapts the **camera capture
 profile** so pose inference stays stable across phones — especially mid-range
@@ -91,7 +91,7 @@ ideals (often UltraLite on Android).
 
 ### Experiment: Front-aligned capture (`device-native`) — 2026-08-06
 
-Flag file: [`src/quality/captureMode.ts`](../packages-tracker/react-native-pose-estimation/src/quality/captureMode.ts)
+Flag file: [`src/quality/captureMode.ts`](../packages/pose-estimation-react-native/src/quality/captureMode.ts)
 
 | Constant | Experiment (current) | Previous stable / iOS |
 |----------|----------------------|------------------------|
@@ -112,7 +112,7 @@ Flag file: [`src/quality/captureMode.ts`](../packages-tracker/react-native-pose-
 #### REVERT
 
 ```bash
-# 1) Edit packages-tracker/react-native-pose-estimation/src/quality/captureMode.ts
+# 1) Edit packages/pose-estimation-react-native/src/quality/captureMode.ts
 #    CAPTURE_CONSTRAINT_MODE = 'profile-constrained'
 #    ENABLE_MALI_HARD_CAP = true
 #    ANDROID_INFER_FRAME_SKIP = 0
@@ -121,12 +121,12 @@ Flag file: [`src/quality/captureMode.ts`](../packages-tracker/react-native-pose-
 #    ANDROID_MIN_TARGET_FPS = 15
 #    ANDROID_PERF_DEBUG = false
 
-cd packages-tracker/react-native-pose-estimation
+cd packages/pose-estimation-react-native
 npm run build:runtime-payload   # re-embeds pose-runtime.js
 npm run build
 
 cd ../../testapp
-rm -rf node_modules/@posetracker-tracker/react-native-pose-estimation
+rm -rf node_modules/@pose-tracker/react-native-pose-estimation
 npm install
 npx expo start -c
 ```

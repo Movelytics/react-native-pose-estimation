@@ -15,10 +15,12 @@
 - Watermark: shown for keyless/free; hidden for paid plans
 - Not included: BlazePose, MediaPipe, multi-person models (separate SDKs later)
 
-## npm (locked)
+## npm + GitHub (locked)
 
 - Org: [@pose-tracker](https://www.npmjs.com/org/pose-tracker)
 - Publish name: `@pose-tracker/react-native-pose-estimation`
+- SDK: https://github.com/Movelytics/react-native-pose-estimation
+- Demo: https://github.com/Movelytics/react-native-pose-estimation-demo
 - Local monorepo may still use `@posetracker/pose-estimation-react-native` until rename
 
 ## Install (after publish)

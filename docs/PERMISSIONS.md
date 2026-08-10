@@ -60,7 +60,7 @@ project after changing plugins (`npx expo prebuild` / EAS).
 import { useEffect } from 'react';
 import { Text, View } from 'react-native';
 import { useCameraPermissions } from 'expo-camera';
-import { WebViewPoseView } from '@posetracker-tracker/react-native-pose-estimation';
+import { WebViewPoseView } from '@pose-tracker/react-native-pose-estimation';
 
 export function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();

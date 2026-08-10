@@ -22,7 +22,7 @@ flowchart TD
     CAM["expo-camera + cameraWithTensors → tf.Tensor3D (chemin TF.js)"]
   end
 
-  subgraph sdk ["@posetracker-tracker/react-native-pose-estimation (npm) — ZÉRO logique métier"]
+  subgraph sdk ["@pose-tracker/react-native-pose-estimation (npm) — ZÉRO logique métier"]
     CLIENT["PoseTrackerClient (orchestrateur, statuts idle→…→ready + mode keypoints-only/full-engine, sélection auto de backend)"]
     CFG["configure(apiToken) — client handshake (non bloquant)"]
     LOADER["EngineLoader (cache scellé + SHA-256 + crash-loop guard)"]
