@@ -21,11 +21,10 @@ Versions follow [SemVer](https://semver.org/).
 - Hermes-safe engine bundle (Babel after esbuild)
 - WebView parity: grades A–F, nested `counter.form_score`, classic angles
 
-## [0.1.1] — 2026-08 (internal)
+## [0.1.2] — 2026-08-10
 
-- Internal monorepo release before first public npm publish.
+### Changed
 
-## [0.1.0] — TBD (first public npm)
+- Live watermark (“powered by” + logo) ~20% larger
 
-- First public release of `@pose-tracker/react-native-pose-estimation`
-  (org: https://www.npmjs.com/org/pose-tracker — see `docs/PUBLISHING.md`).
+## [0.1.1] — 2026-08 (first public npm)
