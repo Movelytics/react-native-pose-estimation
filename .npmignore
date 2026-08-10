@@ -1,0 +1,20 @@
+# Keep publish tarball lean — `files` in package.json is the allow-list;
+# this denies common junk if someone widens `files`.
+
+node_modules/
+**/node_modules/
+dist-runtime/
+runtime/
+scripts/
+*.tsbuildinfo
+.tsbuildinfo
+.DS_Store
+.env
+.env.*
+*.log
+coverage/
+__tests__/
+**/*.test.ts
+**/*.spec.ts
+.vscode/
+.idea/

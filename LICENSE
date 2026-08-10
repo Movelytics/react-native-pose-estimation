@@ -1,0 +1,45 @@
+PoseTracker React Native SDK
+Copyright (c) 2024–2026 Movelytics SAS. All rights reserved.
+
+PROPRIETARY SOFTWARE LICENSE
+
+This repository and the npm package published under the @pose-tracker scope
+(the "Software") are proprietary to Movelytics SAS ("Licensor").
+
+1. Grant of use
+   Subject to a valid PoseTracker account and applicable product terms
+   (including free-tier limits and paid plans), Licensor grants you a
+   non-exclusive, non-transferable, revocable license to install and use the
+   Software in your applications to access PoseTracker services and on-device
+   pose estimation features as documented.
+
+2. Restrictions
+   Except as expressly permitted in writing by Licensor, you may not:
+   - sell, sublicense, or redistribute the Software as a competing SDK or
+     standalone pose-estimation product;
+   - remove or obscure proprietary notices, branding, or watermarks required
+     by your plan;
+   - reverse engineer the remote movement engine or proprietary pipeline
+     beyond what applicable law permits;
+   - use the Software in violation of PoseTracker Terms of Service or
+     applicable law.
+
+3. Third-party components
+   The Software redistributes third-party components (including TensorFlow.js
+   and the MoveNet model) under their own licenses. See THIRD_PARTY_NOTICES.md.
+   Those licenses are not overridden by this LICENSE.
+
+4. No warranty
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL
+   THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+   LIABILITY ARISING FROM THE SOFTWARE OR ITS USE.
+
+5. Commercial terms
+   Paid plans, API keys, usage limits, and support are governed by your
+   PoseTracker / Movelytics commercial agreement and
+   https://www.posetracker.com terms (or successor URLs).
+
+Contact: hello@posetracker.com
+Website: https://www.posetracker.com

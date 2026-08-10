@@ -1,0 +1,8 @@
+node_modules/
+dist-runtime/
+.DS_Store
+*.tsbuildinfo
+.npm/
+*.tgz
+.env
+.env.*
