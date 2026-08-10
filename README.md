@@ -30,10 +30,9 @@ npm install @pose-tracker/react-native-pose-estimation react-native-webview
 npx expo install react-native-webview expo-camera
 ```
 
-> **Publishing:** npm org [`@pose-tracker`](https://www.npmjs.com/org/pose-tracker).
-> Public package name: `@pose-tracker/react-native-pose-estimation` — see
-> GitHub Releases / CHANGELOG. Until publish, the monorepo still
-> uses the local `file:` name `@pose-tracker/react-native-pose-estimation`.
+> **npm:** [`@pose-tracker`](https://www.npmjs.com/org/pose-tracker) /
+> `@pose-tracker/react-native-pose-estimation`  
+> **GitHub:** https://github.com/Movelytics/react-native-pose-estimation
 
 **Required:** host app must declare camera permissions — see
 [PERMISSIONS.md](docs/PERMISSIONS.md).
