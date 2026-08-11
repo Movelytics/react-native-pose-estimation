@@ -21,6 +21,14 @@ Versions follow [SemVer](https://semver.org/).
 - Hermes-safe engine bundle (Babel after esbuild)
 - WebView parity: grades A–F, nested `counter.form_score`, classic angles
 
+## [Light 0.1.0] — 2026-08-11
+
+First public release of **`@pose-tracker/react-native-pose-estimation-light`**.
+
+- Online MoveNet / TF.js (CDN + product model URL); no bundled weights
+- Packed tarball ~**206 kB** vs offline ~**9.9 MB** (see `docs/LIGHT_SDK.md`)
+- GitHub: https://github.com/Movelytics/react-native-pose-estimation-light
+
 ## [0.1.3] — 2026-08-10
 
 ### Fixed

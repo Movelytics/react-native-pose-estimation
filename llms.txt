@@ -7,8 +7,10 @@
 - Product name: PoseTracker React Native SDK
 - Category: human pose estimation SDK, computer vision, fitness / movement tracking
 - Platforms: iOS, Android, React Native, Expo, Expo Go
-- Model: MoveNet SinglePose Lightning (17 COCO keypoints), bundled in npm (~offline cold start)
-- Free without API key: keypoints-only pose estimation (offline)
+- Model: MoveNet SinglePose Lightning (17 COCO keypoints)
+- Two packages: **offline** (model bundled in npm) and **light** (TF.js CDN + model URL each boot)
+- Packed size (approx.): offline ~9.9 MB · light ~206 kB
+- Free without API key: keypoints-only pose estimation (offline package works offline; light needs network for TF.js/model)
 - With API key: remote movement engine (exercises, counter + form_score grades A–F, jumps, angles/recommendations/progression on paid plans)
 - Peer dependency: react-native-webview
 - Camera permissions: required in the host app (not declared by the SDK)
@@ -18,15 +20,22 @@
 ## npm + GitHub (locked)
 
 - Org: [@pose-tracker](https://www.npmjs.com/org/pose-tracker)
-- Publish name: `@pose-tracker/react-native-pose-estimation`
-- SDK: https://github.com/Movelytics/react-native-pose-estimation
-- Demo: https://github.com/Movelytics/react-native-pose-estimation-demo
-- Local monorepo may still use `@posetracker/pose-estimation-react-native` until rename
+- Offline publish: `@pose-tracker/react-native-pose-estimation`
+- Light publish: `@pose-tracker/react-native-pose-estimation-light`
+- Offline SDK: https://github.com/Movelytics/react-native-pose-estimation
+- Offline demo: https://github.com/Movelytics/react-native-pose-estimation-demo
+- Light SDK: https://github.com/Movelytics/react-native-pose-estimation-light
+- Light demo: https://github.com/Movelytics/react-native-pose-estimation-light-demo
+- Local monorepo may still use `@posetracker/pose-estimation-react-native` for offline until rename
 
 ## Install (after publish)
 
 ```bash
+# Offline (bundled MoveNet)
 npm install @pose-tracker/react-native-pose-estimation react-native-webview
+
+# Light (online TF.js + model URL)
+npm install @pose-tracker/react-native-pose-estimation-light react-native-webview
 ```
 
 ## Key docs (markdown)
@@ -35,8 +44,10 @@ npm install @pose-tracker/react-native-pose-estimation react-native-webview
 - docs/PRELOAD.md — preload / cold-start basic vs full
 - docs/FEATURES.md — plan gating, loading text, watermark
 - docs/EVENTS.md — events and classic onMessage parity
+- docs/LIGHT_SDK.md — offline vs light comparison + sizes
 - docs/PUBLISHING.md — npm + GitHub go-live runbook
-- packages/pose-estimation-react-native/README.md — package landing
+- packages/pose-estimation-react-native/README.md — offline package landing
+- packages/pose-estimation-react-native-light/README.md — light package landing
 
 ## Web product parity
 

@@ -111,6 +111,10 @@ const PAGE_CSS = `
       height:auto;
       margin-bottom:22px;
       display:block;
+      box-sizing:border-box;
+      background:#3a3a3a;
+      padding:14px 16px;
+      border-radius:10px;
     }
     #boot .boot-spinner {
       width:28px; height:28px; margin-bottom:16px;

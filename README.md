@@ -22,6 +22,18 @@ endpoint.
 | **UX** | Branded loading screen, PoseTracker skeleton overlay, plan-gated watermark |
 | **Peers** | `react-native-webview` (required); optional FS helpers for engine cache |
 
+## Offline vs Light
+
+This package is the **offline / bundled** SDK (~**9.9 MB** packed). If you need a
+much smaller install and can require network for TF.js + MoveNet each session,
+use the sibling **Light** SDK (~**206 kB** packed):
+
+- npm: [`@pose-tracker/react-native-pose-estimation-light`](https://www.npmjs.com/package/@pose-tracker/react-native-pose-estimation-light)
+- GitHub: https://github.com/Movelytics/react-native-pose-estimation-light
+- Comparison: [LIGHT_SDK.md](docs/LIGHT_SDK.md)
+
+Same free keypoints + paid engine API surface; light fetches the model at boot.
+
 ## Install
 
 ```bash
@@ -148,4 +160,5 @@ see [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md).
 
 - Product: https://www.posetracker.com  
 - API docs: https://posetracker.gitbook.io/posetracker-api  
-- Issues / source: *(set after GitHub repo creation — see PUBLISHING.md)*
+- Issues / source: https://github.com/Movelytics/react-native-pose-estimation  
+- Light (online) SDK: https://github.com/Movelytics/react-native-pose-estimation-light
