@@ -10,7 +10,7 @@ import type { CapturePriority } from '../../quality/profiles';
 import type { PoseRuntimeParts } from '../../runtime/RuntimeCache';
 import type { SkeletonDefinition } from '../../types/skeleton';
 /** Bumped on every assembler-path change — appears in WebView diag logs. */
-export declare const POSE_HTML_BUILD = "20260810-bootBrand";
+export declare const POSE_HTML_BUILD = "20260812-mediaSources";
 /** Default boot overlay copy (WebView `loading_message` parity). */
 export declare const DEFAULT_LOADING_TEXT = "AI Loading";
 export interface PoseHtmlOptions {
@@ -63,6 +63,13 @@ export interface PoseHtmlOptions {
     showWatermark?: boolean;
     /** Show the technical `#hud` overlay (FPS / backend). Default false. */
     debugHud?: boolean;
+    /**
+     * Input source mode. Default `camera`.
+     * For `video` / `image`, pass a URI the WebView can load (`sourceUrl`).
+     */
+    sourceType?: 'camera' | 'video' | 'image';
+    /** file://, content://, https://, or data: URL for video/image modes. */
+    sourceUrl?: string;
 }
 /**
  * Assemble the pose page from the downloaded runtime parts. Pure assembly:

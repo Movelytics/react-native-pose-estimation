@@ -38,6 +38,7 @@ export type InitializationStep =
   | 'downloading'
   | 'warming'
   | 'accessing_webcam'
+  | 'loading_media'
   | 'loading_pose_model'
   | 'ready';
 

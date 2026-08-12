@@ -71,6 +71,18 @@ export interface WebViewPoseViewProps {
      * Fetched via `GET /api/sdk/skeleton`. Ignored if `skeletonDef` is set.
      */
     skeletonUuid?: string | null;
+    /**
+     * Input source. Default `camera` (getUserMedia).
+     * For `video` / `image`, the host app picks a file and passes `sourceUri`
+     * (file://, content://, https, data URL) or `sourceBase64`.
+     */
+    source?: 'camera' | 'video' | 'image';
+    /** URI injected into the WebView for video/image modes. */
+    sourceUri?: string;
+    /** Optional base64 payload (without data: prefix); paired with sourceMime. */
+    sourceBase64?: string;
+    /** MIME for sourceBase64 (default image/jpeg or video/mp4). */
+    sourceMime?: string;
     onPose?: (pose: Pose, stats: {
         inferenceTimeMs: number;
         timestampMs: number;

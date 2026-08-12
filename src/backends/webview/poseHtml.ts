@@ -21,7 +21,7 @@ import type { SkeletonDefinition } from '../../types/skeleton';
 import { POSETRACKER_LOGO_DATA_URL } from './brandAssets';
 
 /** Bumped on every assembler-path change — appears in WebView diag logs. */
-export const POSE_HTML_BUILD = '20260810-bootBrand';
+export const POSE_HTML_BUILD = '20260812-mediaSources';
 
 /** Default boot overlay copy (WebView `loading_message` parity). */
 export const DEFAULT_LOADING_TEXT = 'AI Loading';
@@ -76,16 +76,23 @@ export interface PoseHtmlOptions {
   showWatermark?: boolean;
   /** Show the technical `#hud` overlay (FPS / backend). Default false. */
   debugHud?: boolean;
+  /**
+   * Input source mode. Default `camera`.
+   * For `video` / `image`, pass a URI the WebView can load (`sourceUrl`).
+   */
+  sourceType?: 'camera' | 'video' | 'image';
+  /** file://, content://, https://, or data: URL for video/image modes. */
+  sourceUrl?: string;
 }
 
 const PAGE_CSS = `
     html, body { margin:0; padding:0; width:100%; height:100%; background:#000; overflow:hidden; }
     #wrap { position:relative; width:100%; height:100%; background:#000; }
-    video, canvas {
+    video, img#still, canvas {
       position:absolute; inset:0; width:100%; height:100%;
       object-fit:cover; opacity:0; transition:opacity 180ms ease-out;
     }
-    video { z-index:1; background:#000; }
+    video, img#still { z-index:1; background:#000; }
     canvas { z-index:2; pointer-events:none; }
     #boot {
       position:absolute; inset:0; z-index:4;
@@ -204,6 +211,11 @@ export function buildPoseHtml(parts: PoseRuntimeParts, options?: PoseHtmlOptions
     loadingText,
     showWatermark: watermarkOn,
     debugHud,
+    sourceType:
+      options?.sourceType === 'video' || options?.sourceType === 'image'
+        ? options.sourceType
+        : 'camera',
+    sourceUrl: typeof options?.sourceUrl === 'string' ? options.sourceUrl : null,
     /** See src/quality/captureMode.ts — REVERT by flipping that flag. */
     captureConstraintMode: CAPTURE_CONSTRAINT_MODE,
     capturePriority,
@@ -227,6 +239,7 @@ export function buildPoseHtml(parts: PoseRuntimeParts, options?: PoseHtmlOptions
     '<style>', PAGE_CSS, '</style></head><body>',
     '<div id="wrap">',
     '<video id="video" playsinline muted autoplay></video>',
+    '<img id="still" alt="" draggable="false" />',
     '<canvas id="overlay"></canvas>',
     // Watermark visibility is toggled by pose-runtime once the camera is
     // revealed (CFG.showWatermark + coldStart=full). Start hidden.

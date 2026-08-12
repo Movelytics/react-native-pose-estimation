@@ -62,6 +62,45 @@
 
   var video = document.getElementById('video');
   var canvas = document.getElementById('overlay');
+
+  var still = document.getElementById('still');
+  var sourceMode = (CFG.sourceType === 'video' || CFG.sourceType === 'image')
+    ? CFG.sourceType
+    : 'camera';
+  var sourceUrl = (typeof CFG.sourceUrl === 'string' && CFG.sourceUrl) ? CFG.sourceUrl : null;
+  var imageShotPending = false;
+
+  function activeFrame() {
+    if (sourceMode === 'image' && still) return still;
+    return video;
+  }
+
+  function frameSize() {
+    var el = activeFrame();
+    if (el && el !== video) {
+      return { vw: el.naturalWidth || el.width || 0, vh: el.naturalHeight || el.height || 0 };
+    }
+    return { vw: video.videoWidth || 0, vh: video.videoHeight || 0 };
+  }
+
+  function setMediaVisible(mode) {
+    // mode: 'video' | 'image' | 'none'
+    var showVideo = mode === 'video';
+    var showImage = mode === 'image';
+    var show = showVideo || showImage;
+    video.style.opacity = showVideo ? '1' : '0';
+    if (still) still.style.opacity = showImage ? '1' : '0';
+    canvas.style.opacity = show ? '1' : '0';
+    if (bootCover) {
+      if (show) bootCover.classList.add('hide');
+      else {
+        bootCover.classList.remove('hide');
+        resetBootLoadingText();
+      }
+    }
+    applyWatermarkVisibility();
+  }
+
   var hud = document.getElementById('hud');
   var bootCover = document.getElementById('boot');
   var watermarkEl = document.getElementById('wm');
@@ -99,27 +138,23 @@
    * a tiny or over-zoomed frame for a few frames.
    */
   function setCameraVisible(visible) {
-    video.style.opacity = visible ? '1' : '0';
-    canvas.style.opacity = visible ? '1' : '0';
-    if (bootCover) {
-      if (visible) {
-        bootCover.classList.add('hide');
-      } else {
-        bootCover.classList.remove('hide');
-        resetBootLoadingText();
-      }
+    if (visible) {
+      setMediaVisible(sourceMode === 'image' ? 'image' : 'video');
+    } else {
+      setMediaVisible('none');
     }
-    applyWatermarkVisibility();
   }
 
   function revealCameraWhenReady() {
     if (cameraRevealed) return;
-    if (!(video.videoWidth > 0 && video.videoHeight > 0)) return;
+    var sz = frameSize();
+    if (!(sz.vw > 0 && sz.vh > 0)) return;
     // Two rAFs: let the browser apply object-fit:cover with real intrinsic size.
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
         if (cameraRevealed) return;
-        if (!(video.videoWidth > 0 && video.videoHeight > 0)) return;
+        var sz2 = frameSize();
+        if (!(sz2.vw > 0 && sz2.vh > 0)) return;
         cameraRevealed = true;
         setCameraVisible(true);
         applyWatermarkVisibility();
@@ -432,8 +467,10 @@
    */
   async function preparePoseInput() {
     var t0 = performance.now();
-    var vw = video.videoWidth || 1;
-    var vh = video.videoHeight || 1;
+    var frame = activeFrame();
+    var sz = frameSize();
+    var vw = sz.vw || 1;
+    var vh = sz.vh || 1;
     var scale = Math.min(INPUT_SIZE / vw, INPUT_SIZE / vh);
     var drawW = vw * scale;
     var drawH = vh * scale;
@@ -444,7 +481,7 @@
     var c2d = poseCanvasCtx();
     c2d.fillStyle = '#000';
     c2d.fillRect(0, 0, INPUT_SIZE, INPUT_SIZE);
-    c2d.drawImage(video, 0, 0, vw, vh, offsetX, offsetY, drawW, drawH);
+    c2d.drawImage(frame, 0, 0, vw, vh, offsetX, offsetY, drawW, drawH);
 
     if (PREPROCESS_PATH === 'canvas-direct') {
       pushStage('bitmap', performance.now() - t0);
@@ -835,7 +872,12 @@
 
   async function loop(token) {
     if (token !== loopToken || !running || !model) return;
-    if (!busy && video.readyState >= 2 && video.videoWidth > 0) {
+    var szLoop = frameSize();
+    var mediaReady = sourceMode === 'image'
+      ? (szLoop.vw > 0 && imageShotPending)
+      : (video.readyState >= 2 && video.videoWidth > 0 &&
+         !(sourceMode === 'video' && (video.paused || video.ended)));
+    if (!busy && mediaReady) {
       // Android frame-skip: after each inference, burn N free rAF ticks before
       // the next one. Preview keeps streaming; last skeleton stays on canvas.
       if (skipCountdown > 0) {
@@ -847,8 +889,14 @@
           var result = await infer();
           inferErrorStreak = 0;
           inferTicksWindow += 1;
-          decodeAndPublish(result.data, result.totalMs);
+decodeAndPublish(result.data, result.totalMs);
           skipCountdown = INFER_FRAME_SKIP;
+          if (sourceMode === 'image') {
+            imageShotPending = false;
+            running = false;
+            busy = false;
+            return;
+          }
         } catch (err) {
           var message = err && err.message ? err.message : String(err);
           setHud('infer error: ' + message);
@@ -1056,7 +1104,11 @@
       if (BOOT_CAMERA) {
         // Full cold-start (legacy): open camera before posting ready — same
         // as the historical warmer that called getUserMedia during preload.
-        await openCameraAndLoop('boot-full');
+        if ((sourceMode === 'video' || sourceMode === 'image') && sourceUrl) {
+          await window.__PT_SET_SOURCE({ type: sourceMode, url: sourceUrl });
+        } else {
+          await openCameraAndLoop('boot-full');
+        }
         if (suspended) {
           post({ type: 'diag', message: 'boot finished while hidden — staying suspended (camera released)' });
           stopCameraTracks();
@@ -1269,6 +1321,112 @@
         ' reason=' + reason
     });
   }
+
+
+  function stopNonCameraMedia() {
+    try { video.pause(); } catch (e) {}
+    try { video.removeAttribute('src'); video.srcObject = null; video.load(); } catch (e) {}
+    if (still) {
+      try { still.removeAttribute('src'); } catch (e) {}
+    }
+  }
+
+  function loadVideoUrl(url) {
+    return new Promise(function (resolve, reject) {
+      video.onloadeddata = function () { resolve(); };
+      video.onerror = function () { reject(new Error('Failed to load video URL')); };
+      video.loop = true;
+      video.muted = true;
+      video.playsInline = true;
+      video.src = url;
+      video.load();
+      video.play().catch(function () {});
+      setTimeout(function () {
+        if (video.videoWidth > 0) resolve();
+      }, 50);
+    });
+  }
+
+  function loadImageUrl(url) {
+    return new Promise(function (resolve, reject) {
+      if (!still) { reject(new Error('still image element missing')); return; }
+      still.onload = function () { resolve(); };
+      still.onerror = function () { reject(new Error('Failed to load image URL')); };
+      still.src = url;
+      if (still.complete && still.naturalWidth > 0) resolve();
+    });
+  }
+
+  /**
+   * Switch pose input: { type: 'camera'|'video'|'image', url?: string, base64?: string, mime?: string }
+   * Host apps pick a file (document/image picker) and pass a URI or data URL.
+   */
+  window.__PT_SET_SOURCE = async function (opts) {
+    opts = opts || {};
+    var type = opts.type || 'camera';
+    var url = opts.url || opts.uri || null;
+    if (opts.base64) {
+      var mime = opts.mime || (type === 'video' ? 'video/mp4' : 'image/jpeg');
+      url = 'data:' + mime + ';base64,' + opts.base64;
+    }
+    running = false;
+    loopToken += 1;
+    busy = false;
+    imageShotPending = false;
+    stopCameraTracks();
+    stopNonCameraMedia();
+    cameraArmed = type === 'camera' ? cameraArmed : false;
+    cameraRevealed = false;
+    setCameraVisible(false);
+    sourceMode = (type === 'video' || type === 'image') ? type : 'camera';
+    sourceUrl = url;
+
+    if (sourceMode === 'camera') {
+      post({ type: 'initialization', step: 'accessing_webcam', message: 'accessing webcam (source=camera)', ready: false });
+      await openCameraAndLoop('set-source-camera');
+      if (!suspended) {
+        startLoop();
+        postReadySignal(true, 'full');
+      }
+      return;
+    }
+
+    if (!url) {
+      post({ type: 'error', message: 'source=' + sourceMode + ' requires url or base64' });
+      return;
+    }
+
+    post({
+      type: 'initialization',
+      step: 'loading_media',
+      message: 'loading ' + sourceMode + ' (source=' + sourceMode + ')',
+      ready: false
+    });
+    try {
+      if (sourceMode === 'video') {
+        cameraArmed = true; // allow resume semantics for file video? keep false for camera reopen
+        cameraArmed = false;
+        await loadVideoUrl(url);
+        revealCameraWhenReady();
+        startLoop();
+        post({ type: 'ready', backend: lastWarmBackend, medianInferenceMs: lastWarmMedMs, warmUpRunsMs: lastWarmTimes, estimatedFps: lastWarmEstFps, profileId: CFG.profileId, cameraOpened: false, coldStart: 'full', gl: glInfo(), note: 'source=video' });
+      } else {
+        await loadImageUrl(url);
+        imageShotPending = true;
+        revealCameraWhenReady();
+        startLoop();
+        post({ type: 'ready', backend: lastWarmBackend, medianInferenceMs: lastWarmMedMs, warmUpRunsMs: lastWarmTimes, estimatedFps: lastWarmEstFps, profileId: CFG.profileId, cameraOpened: false, coldStart: 'full', gl: glInfo(), note: 'source=image' });
+      }
+    } catch (err) {
+      post({ type: 'error', message: 'media load failed: ' + (err && err.message ? err.message : String(err)) });
+    }
+  };
+
+  window.__PT_ANALYZE = function () {
+    if (sourceMode !== 'image') return;
+    imageShotPending = true;
+    if (!running) startLoop();
+  };
 
   window.__PT_OPEN_CAMERA = function () {
     return openCameraAndLoop('host-openCamera').then(function () {

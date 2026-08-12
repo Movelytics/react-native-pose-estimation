@@ -45,9 +45,19 @@ npm install @pose-tracker/react-native-pose-estimation-light react-native-webvie
 - docs/FEATURES.md — plan gating, loading text, watermark
 - docs/EVENTS.md — events and classic onMessage parity
 - docs/LIGHT_SDK.md — offline vs light comparison + sizes
+- docs/DUAL_SDK_CHANGES.md — for agents: mirror shared changes to both packages or ask first
 - docs/PUBLISHING.md — npm + GitHub go-live runbook
+- AGENTS.md — short dual-SDK policy pointer for coding agents
 - packages/pose-estimation-react-native/README.md — offline package landing
 - packages/pose-estimation-react-native-light/README.md — light package landing
+
+## For coding agents
+
+Two packages share API/UX; delivery differs (bundled vs CDN+modelUrl). When editing one:
+
+- Shared change (boot UI, watermark, permissions behavior, WebViewPoseView/client API, events, adaptive quality) → implement on **both** or **ask the user** which package(s) before starting.
+- Delivery-only (bundled assets vs CDN/`modelUrl`/pack size) → that package only.
+- Follow docs/DUAL_SDK_CHANGES.md and docs/LIGHT_SDK.md.
 
 ## Web product parity
 

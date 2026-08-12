@@ -119,6 +119,18 @@ export interface WebViewPoseViewProps {
    * Fetched via `GET /api/sdk/skeleton`. Ignored if `skeletonDef` is set.
    */
   skeletonUuid?: string | null;
+  /**
+   * Input source. Default `camera` (getUserMedia).
+   * For `video` / `image`, the host app picks a file and passes `sourceUri`
+   * (file://, content://, https, data URL) or `sourceBase64`.
+   */
+  source?: 'camera' | 'video' | 'image';
+  /** URI injected into the WebView for video/image modes. */
+  sourceUri?: string;
+  /** Optional base64 payload (without data: prefix); paired with sourceMime. */
+  sourceBase64?: string;
+  /** MIME for sourceBase64 (default image/jpeg or video/mp4). */
+  sourceMime?: string;
   onPose?: (pose: Pose, stats: { inferenceTimeMs: number; timestampMs: number }) => void;
   children?: React.ReactNode;
 }
@@ -266,6 +278,8 @@ export function WebViewPoseView(props: WebViewPoseViewProps): React.ReactElement
       // injected via __PT_SET_SKELETON (avoids remounting on uuid fetch).
       skeletonDef: props.skeletonDef ?? null,
       capturePriority: client.getQualityState().capturePriority,
+      sourceType: props.source ?? 'camera',
+      sourceUrl: props.sourceUri,
     });
   }, [
     facingMode,
@@ -276,6 +290,8 @@ export function WebViewPoseView(props: WebViewPoseViewProps): React.ReactElement
     coldStart,
     loadingText,
     props.skeletonDef,
+    props.source,
+    props.sourceUri,
   ]);
 
   // Apply custom skeleton (uuid fetch or prop) without remounting the page.
@@ -306,6 +322,33 @@ export function WebViewPoseView(props: WebViewPoseViewProps): React.ReactElement
       `window.__PT_SET_LOADING_TEXT && window.__PT_SET_LOADING_TEXT(${payload}); true;`,
     );
   }, [isWebViewBackend, html, loadingText]);
+
+  // Live source switches after first HTML boot (CFG already has initial source).
+  const lastSourceHtmlRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isWebViewBackend || !html) return;
+    if (lastSourceHtmlRef.current !== html) {
+      lastSourceHtmlRef.current = html;
+      return;
+    }
+    const type = props.source ?? 'camera';
+    const payload = JSON.stringify({
+      type,
+      url: props.sourceUri ?? null,
+      base64: props.sourceBase64 ?? null,
+      mime: props.sourceMime ?? null,
+    });
+    webRef.current?.injectJavaScript?.(
+      `window.__PT_SET_SOURCE && window.__PT_SET_SOURCE(${payload}); true;`,
+    );
+  }, [
+    isWebViewBackend,
+    html,
+    props.source,
+    props.sourceUri,
+    props.sourceBase64,
+    props.sourceMime,
+  ]);
 
   useEffect(() => {
     if (!(backend instanceof WebViewPoseBackend)) {

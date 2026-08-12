@@ -23,7 +23,7 @@ export type PoseTrackerStatus = 'idle' | 'configuring' | 'downloading' | 'warmin
  * restarting the camera pipeline, via `configure()` or a preload retry.
  */
 export type PoseTrackerMode = 'keypoints-only' | 'full-engine';
-export type InitializationStep = 'configuring' | 'downloading' | 'warming' | 'accessing_webcam' | 'loading_pose_model' | 'ready';
+export type InitializationStep = 'configuring' | 'downloading' | 'warming' | 'accessing_webcam' | 'loading_media' | 'loading_pose_model' | 'ready';
 export interface InitializationEvent {
     type: 'initialization';
     /**

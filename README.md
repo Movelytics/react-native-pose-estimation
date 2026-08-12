@@ -34,6 +34,9 @@ use the sibling **Light** SDK (~**206 kB** packed):
 
 Same free keypoints + paid engine API surface; light fetches the model at boot.
 
+**Agents:** shared UX/API/bugfixes → mirror to light (or ask first). See
+[`DUAL_SDK_CHANGES.md`](docs/DUAL_SDK_CHANGES.md).
+
 ## Install
 
 ```bash
@@ -79,6 +82,10 @@ function CameraScreen() {
       style={{ flex: 1 }}
       drawSkeleton
       loadingText="AI Loading"
+      // Default source="camera". Host-picked file:
+      // source="image" sourceUri={fileUri}
+      // source="video" sourceUri={fileUri}
+      // or sourceBase64 + sourceMime
     />
   );
 }
@@ -144,7 +151,8 @@ Yes. Same WebView MoveNet Lightning path on both; adaptive capture quality.
 Yes (WebView peer). Apple Vision backend is optional and not available in Expo Go.
 
 **BlazePose / MediaPipe?**  
-Not in this SDK. MoveNet Lightning only (one SDK, one model).
+Not in the **offline** SDK (bundled MoveNet Lightning only). Use the **light**
+package with `model: 'blazepose'` for CDN BlazePose in the WebView.
 
 **Who sees the “powered by PoseTracker” watermark?**  
 Keyless and free plans. Hidden for paid plans (developer / company / enterprise…).

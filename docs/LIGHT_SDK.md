@@ -73,13 +73,18 @@ relative neighbors (`group1-shard1of2.bin`, etc.).
 
 - `model: 'movenet' | 'movenet-singlepose-lightning'` → product Lightning URL.
 - `modelUrl` → explicit TF.js graph-model override.
-- `model: 'blazepose'` → **not wired** yet (MediaPipe). Clear error at boot.
+- `model: 'blazepose'` → CDN `@tensorflow-models/pose-detection` (lite, TF.js
+  runtime) inside the WebView. Emits the same COCO-17 `keypoints` shape as
+  MoveNet (extra BlazePose joints dropped). Heavier than MoveNet — prefer
+  MoveNet on mid-range Android.
 
 ## Where the fetch happens (light)
 
-1. `PoseTrackerClient.getRuntimeParts()` resolves CDN + `modelUrl` (no heavy local assets).
-2. `buildPoseHtml()` injects `<script src="cdn…">` + `window.__PT_MODEL_URL`.
-3. WebView `pose-runtime.js` calls `tf.loadGraphModel(modelUrl)`.
+1. `PoseTrackerClient.getRuntimeParts()` resolves CDN + `modelUrl` / BlazePose scripts.
+2. `buildPoseHtml()` injects `<script src="cdn…">` + `window.__PT_MODEL_URL` (or
+   `__PT_MODEL_KIND=blazepose` without a graph URL).
+3. WebView `pose-runtime.js` calls `tf.loadGraphModel(modelUrl)` **or**
+   `poseDetection.createDetector(BlazePose)` when `model: 'blazepose'`.
 
 WebView `baseUrl` remains `https://localhost/` (same as offline) so
 `getUserMedia` is reliable. Model / weights use absolute URLs with
@@ -106,13 +111,25 @@ npx expo start
 Private runbook: `PoseTracker/.private/GITHUB_RELEASE_OPS.md`  
 Sync script: `PoseTracker/.private/sync-public-repos.sh` (offline + light + demos).
 
+## Dual-package changes (for agents)
+
+Offline and light share the product contract; they diverge only on **how** MoveNet /
+TF.js are delivered. When editing **either** package:
+
+- **Default:** if the change is shared UX / API / bugfix → apply it to **both**, or **ask** which package(s) before coding.
+- **Usually both:** `poseHtml` boot UI, watermark, camera permission behavior, `WebViewPoseView` / client public API, event shapes, adaptive quality, shared `pose-runtime.js` logic.
+- **Usually offline-only:** `bundledRuntime` / assets, pack size from bundling.
+- **Usually light-only:** CDN / `modelUrl` / `model: 'blazepose'`, `onlineRuntime`, network-at-boot, light pack size.
+
+Full checklist (monorepo): [`DUAL_SDK_CHANGES.md`](./DUAL_SDK_CHANGES.md) · package READMEs above · Cursor rule `dual-rn-pose-sdks`.
+
 ## Out of scope (voluntary)
 
-- BlazePose / MediaPipe Tasks in the RN WebView
 - Local FS cache of the light model (fully online by design)
-- Changing the offline bundled package except cross-link docs
+- Unifying delivery (do not turn light into a bundle or offline into CDN-only unless explicitly requested)
+- BlazePose on the **offline** RN package (bundled MoveNet only — use light + `model: 'blazepose'`)
 
 ## Confirm
 
-The offline package remains the default for offline-first apps. Light does **not**
-modify offline sources except documentation cross-references.
+The offline package remains the default for offline-first apps. Shared product
+fixes should land on **both** packages; delivery-only changes stay on one side.

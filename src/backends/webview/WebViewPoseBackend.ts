@@ -86,7 +86,7 @@ export type WebViewPoseMessage =
       type: 'initialization';
       message: string;
       ready?: boolean;
-      step?: 'accessing_webcam' | 'loading_pose_model' | 'ready';
+      step?: 'accessing_webcam' | 'loading_media' | 'loading_pose_model' | 'ready';
     }
   | { type: 'warning'; message: string; code?: string }
   | { type: 'diag'; message: string }
