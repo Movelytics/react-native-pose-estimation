@@ -40,7 +40,9 @@ npm install @pose-tracker/react-native-pose-estimation-light react-native-webvie
 
 ## Canonical product facts (media)
 
-- Input sources (v0.2.0): camera (default) · video · image — both offline + light
+- Current npm: offline + light **0.2.1** (tags/releases `v0.2.1`)
+- Input sources (since v0.2.0): camera (default) · video · image — both offline + light
+- Optional QA (0.2.1): `debugEngine` / `engine_debug` (needs remote engine ≥ 1.2.4; squat V3 counting needs engine meta 0.4.0 / ENGINE 1.3.0)
 - RN props: `source`, `sourceUri`, `sourceBase64`, `sourceMime` (host picks file; no SDK picker)
 - Runtime: `__PT_SET_SOURCE`, `__PT_ANALYZE` — details in docs/MEDIA_SOURCES.md
 

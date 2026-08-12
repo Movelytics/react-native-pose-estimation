@@ -34,7 +34,7 @@ Cross-links:
 
 ## Packed size (measured `npm pack --dry-run`, 2026-08-11)
 
-| | Offline `0.1.3` | Light `0.1.0` |
+| | Offline `0.2.1` | Light `0.2.1` |
 |--|-----------------|---------------|
 | **Package size** (tarball) | **9.9 MB** | **206.0 kB** |
 | **Unpacked size** | **14.7 MB** | **779.1 kB** |
