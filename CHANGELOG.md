@@ -10,14 +10,13 @@ Versions follow [SemVer](https://semver.org/).
 
 ## [0.2.1] — 2026-08-12
 
-### Added
+### Changed
 
-- Optional `debugEngine` / `startExercise(..., { debug: true })` → throttled `engine_debug` events (QA; requires remote engine ≥ 1.2.4)
-- `onEngineDebug` callback on the provider event surface
+- Minor client/session wiring for PoseTracker-internal diagnostics (not a supported public API — see private ops notes).
 
 ### Notes
 
-- Exercise counting (e.g. V3 squat `leg_ratio` FSM) is served by the **remote engine** via `configure` — not by this npm bump. Production apps on **0.2.0** already count correctly once Strapi serves engine meta **0.4.0** / `ENGINE_VERSION` **1.3.0**.
+- Exercise counting is served by the **remote engine** via `configure`. Apps on **0.2.0** continue to work when Strapi serves the current engine bundle.
 
 ## [0.2.0] — 2026-08-11
 

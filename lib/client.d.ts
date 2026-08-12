@@ -88,9 +88,8 @@ export interface PoseTrackerClientOptions extends ConfigureOptions {
      */
     onDiagnostic?: (message: string) => void;
     /**
-     * When true, exercise sessions request `engine_debug` snapshots from the
-     * remote engine (bundle ≥ 1.2.4). Overridable per call via
-     * `startExercise(id, { debug: true|false })`.
+     * @internal PoseTracker QA only — not a supported public API.
+     * See `.private/ENGINE_DEBUG_QA.md` (do not document in Mintlify).
      */
     debugEngine?: boolean;
 }
@@ -110,8 +109,8 @@ export interface StartExerciseOptions {
     /** Device pitch in degrees — jump exercises compensate camera tilt. */
     devicePitchDeg?: number;
     /**
-     * Request throttled `engine_debug` events for this session (movement FSM
-     * QA). Defaults to {@link PoseTrackerClientOptions.debugEngine}.
+     * @internal PoseTracker QA only — not a supported public API.
+     * Defaults to {@link PoseTrackerClientOptions.debugEngine}.
      */
     debug?: boolean;
 }

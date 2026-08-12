@@ -199,8 +199,8 @@ export interface ProgressionEvent {
 }
 
 /**
- * Throttled movement / rep-FSM snapshot for QA (engine ≥ 1.2.4).
- * Enable via `PoseTrackerClientOptions.debugEngine` or `startExercise(..., { debug: true })`.
+ * @internal PoseTracker QA only — not a supported public API (do not document in Mintlify).
+ * Throttled movement / rep-FSM snapshot. See `.private/ENGINE_DEBUG_QA.md`.
  */
 export interface EngineDebugEvent {
   type: 'engine_debug';
