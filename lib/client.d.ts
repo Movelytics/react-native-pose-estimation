@@ -87,6 +87,12 @@ export interface PoseTrackerClientOptions extends ConfigureOptions {
      * triaging Android GPU issues in the field.
      */
     onDiagnostic?: (message: string) => void;
+    /**
+     * When true, exercise sessions request `engine_debug` snapshots from the
+     * remote engine (bundle ≥ 1.2.4). Overridable per call via
+     * `startExercise(id, { debug: true|false })`.
+     */
+    debugEngine?: boolean;
 }
 /**
  * Per-session options for {@link PoseTrackerClient.startExercise} — the SDK
@@ -103,6 +109,11 @@ export interface StartExerciseOptions {
     userHeightCm?: number;
     /** Device pitch in degrees — jump exercises compensate camera tilt. */
     devicePitchDeg?: number;
+    /**
+     * Request throttled `engine_debug` events for this session (movement FSM
+     * QA). Defaults to {@link PoseTrackerClientOptions.debugEngine}.
+     */
+    debug?: boolean;
 }
 export declare class PoseTrackerClient {
     private status;

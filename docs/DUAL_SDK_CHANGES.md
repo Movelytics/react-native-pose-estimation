@@ -13,6 +13,7 @@ Internal policy for anyone (human or LLM) editing either React Native pose packa
 Cross-links:
 
 - Comparison + sizes → [`LIGHT_SDK.md`](./LIGHT_SDK.md)
+- Camera / video / image inputs → [`MEDIA_SOURCES.md`](./MEDIA_SOURCES.md)
 - Offline README → [`../packages/pose-estimation-react-native/README.md`](../packages/pose-estimation-react-native/README.md)
 - Light README → [`../packages/pose-estimation-react-native-light/README.md`](../packages/pose-estimation-react-native-light/README.md)
 - Cursor rule → `PoseTracker/.cursor/rules/dual-rn-pose-sdks.mdc` (and `posetracker-rn-sdk/.cursor/rules/`)
@@ -32,10 +33,11 @@ When you edit **one** SDK:
 - Watermark / free-tier chrome
 - Camera permission behavior and `docs/PERMISSIONS.md` (shared docs)
 - `WebViewPoseView` props and provider options that are product API
+  (including `source` / `sourceUri` / `sourceBase64` / `sourceMime` — see [`MEDIA_SOURCES.md`](./MEDIA_SOURCES.md))
 - Client / provider public TypeScript API (where both expose it)
 - Event shapes and classic `onMessage` parity (`docs/EVENTS.md`)
 - Adaptive quality / `capturePriority` behavior (`docs/ADAPTIVE_QUALITY.md`)
-- Shared logic inside `pose-runtime.js` (inference loop, messaging) — not asset injection
+- Shared logic inside `pose-runtime.js` (inference loop, messaging, `__PT_SET_SOURCE` / `__PT_ANALYZE`) — not asset injection
 
 ## Usually offline-only
 

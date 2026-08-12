@@ -154,6 +154,40 @@ export interface ProgressionEvent {
     value: number;
     timestampMs: number;
 }
+/**
+ * Throttled movement / rep-FSM snapshot for QA (engine ≥ 1.2.4).
+ * Enable via `PoseTrackerClientOptions.debugEngine` or `startExercise(..., { debug: true })`.
+ */
+export interface EngineDebugEvent {
+    type: 'engine_debug';
+    exerciseId: string;
+    engineVersion: string;
+    ready: boolean;
+    postureHint: string;
+    direction?: string;
+    missingKeypoints: string[];
+    stepIndex: number;
+    stepCount: number;
+    stepPosition: number | null;
+    stepProgression: number;
+    progression: number;
+    /** Raw FSM rep count (before minGrade gate). */
+    rawCount: number;
+    /** Public counter after minGrade gate. */
+    publicCount: number;
+    difficulty: string;
+    minGrade: MinGrade | null;
+    pointOfView: 'low' | 'up';
+    computeError?: string;
+    lastSkipReason: string | null;
+    posesProcessed: number;
+    visibleKeypoints: number;
+    knees: {
+        left: number | null;
+        right: number | null;
+    };
+    timestampMs: number;
+}
 export interface RecommendationsEvent {
     type: 'recommendations';
     /** Localized form advice strings. */
@@ -309,7 +343,7 @@ export interface RuntimeDownloadProgressEvent {
     partBytes: number;
     timestampMs: number;
 }
-export type PoseTrackerEvent = InitializationEvent | ErrorEvent | WarningEvent | RuntimeDownloadProgressEvent | KeypointsEvent | AnglesEvent | CounterEvent | PostureEvent | ProgressionEvent | RecommendationsEvent | FormScoreEvent | ExerciseSummaryEvent | JumpCalibrationEvent | JumpStartedEvent | JumpHeightEvent | JumpDiscardedEvent | JumpResultEvent | JumpSummaryEvent | QualityChangedEvent | PerformanceWarningEvent;
+export type PoseTrackerEvent = InitializationEvent | ErrorEvent | WarningEvent | RuntimeDownloadProgressEvent | KeypointsEvent | AnglesEvent | CounterEvent | PostureEvent | ProgressionEvent | EngineDebugEvent | RecommendationsEvent | FormScoreEvent | ExerciseSummaryEvent | JumpCalibrationEvent | JumpStartedEvent | JumpHeightEvent | JumpDiscardedEvent | JumpResultEvent | JumpSummaryEvent | QualityChangedEvent | PerformanceWarningEvent;
 export type PoseTrackerEventType = PoseTrackerEvent['type'];
 export type PoseTrackerEventListener = (event: PoseTrackerEvent) => void;
 /**
@@ -325,6 +359,7 @@ export interface PoseTrackerCallbacks {
     onCounter?: (event: CounterEvent) => void;
     onPosture?: (event: PostureEvent) => void;
     onProgression?: (event: ProgressionEvent) => void;
+    onEngineDebug?: (event: EngineDebugEvent) => void;
     onRecommendations?: (event: RecommendationsEvent) => void;
     onFormScore?: (event: FormScoreEvent) => void;
     onExerciseSummary?: (event: ExerciseSummaryEvent) => void;

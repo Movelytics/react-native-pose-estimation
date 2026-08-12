@@ -52,6 +52,10 @@ npx expo install react-native-webview expo-camera
 **Required:** host app must declare camera permissions — see
 [PERMISSIONS.md](docs/PERMISSIONS.md).
 
+**Media inputs (v0.2):** camera (default), uploaded video, still image — host
+picks the file. See [MEDIA_SOURCES.md](docs/MEDIA_SOURCES.md) and
+https://docs.posetracker.com/media-sources.
+
 ## Quick start (free keypoints, no API key)
 
 ```tsx

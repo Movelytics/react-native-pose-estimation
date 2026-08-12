@@ -59,9 +59,11 @@ export function anglesToClassicTree(angles: AngleValue[]): {
 /**
  * Map a typed SDK event to a classic PoseTracker `sendDataToNative` payload.
  * Returns null for SDK-only events that have no classic equivalent and should
- * not be mirrored (none today — quality/performance map to error/warning).
+ * not be mirrored (e.g. `engine_debug` QA snapshots).
  */
-export function toClassicNativeMessage(event: PoseTrackerEvent): ClassicNativeMessage {
+export function toClassicNativeMessage(
+  event: PoseTrackerEvent,
+): ClassicNativeMessage | null {
   switch (event.type) {
     case 'initialization':
       return {
@@ -247,6 +249,9 @@ export function toClassicNativeMessage(event: PoseTrackerEvent): ClassicNativeMe
         totalParts: event.totalParts,
         timestampMs: event.timestampMs,
       };
+    case 'engine_debug':
+      // SDK-only QA stream — no classic WebView equivalent; skip onMessage.
+      return null;
     default: {
       const _exhaustive: never = event;
       return { type: 'unknown', event: _exhaustive };

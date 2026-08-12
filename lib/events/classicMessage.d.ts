@@ -26,6 +26,6 @@ export declare function anglesToClassicTree(angles: AngleValue[]): {
 /**
  * Map a typed SDK event to a classic PoseTracker `sendDataToNative` payload.
  * Returns null for SDK-only events that have no classic equivalent and should
- * not be mirrored (none today — quality/performance map to error/warning).
+ * not be mirrored (e.g. `engine_debug` QA snapshots).
  */
-export declare function toClassicNativeMessage(event: PoseTrackerEvent): ClassicNativeMessage;
+export declare function toClassicNativeMessage(event: PoseTrackerEvent): ClassicNativeMessage | null;

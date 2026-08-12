@@ -281,6 +281,9 @@ export function usePoseTracker(callbacks: PoseTrackerCallbacks = {}): PoseTracke
         case 'progression':
           cb.onProgression?.(event);
           break;
+        case 'engine_debug':
+          cb.onEngineDebug?.(event);
+          break;
         case 'recommendations':
           cb.onRecommendations?.(event);
           break;

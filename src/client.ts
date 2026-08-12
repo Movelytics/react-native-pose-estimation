@@ -69,7 +69,6 @@ import {
 import {
   toClassicNativeMessage,
   type ClassicMessageListener,
-  type ClassicNativeMessage,
 } from './events/classicMessage';
 import {
   FREE_PLAN_FEATURES_MESSAGE,
@@ -150,6 +149,12 @@ export interface PoseTrackerClientOptions extends ConfigureOptions {
    * triaging Android GPU issues in the field.
    */
   onDiagnostic?: (message: string) => void;
+  /**
+   * When true, exercise sessions request `engine_debug` snapshots from the
+   * remote engine (bundle ≥ 1.2.4). Overridable per call via
+   * `startExercise(id, { debug: true|false })`.
+   */
+  debugEngine?: boolean;
 }
 
 /**
@@ -167,6 +172,11 @@ export interface StartExerciseOptions {
   userHeightCm?: number;
   /** Device pitch in degrees — jump exercises compensate camera tilt. */
   devicePitchDeg?: number;
+  /**
+   * Request throttled `engine_debug` events for this session (movement FSM
+   * QA). Defaults to {@link PoseTrackerClientOptions.debugEngine}.
+   */
+  debug?: boolean;
 }
 
 export class PoseTrackerClient {
@@ -1018,12 +1028,14 @@ export class PoseTrackerClient {
     this.stopExercise();
     this.currentExerciseId = exerciseId;
     this.keypointsSuppressionLogged = false;
+    const debug = options.debug ?? this.options.debugEngine === true;
     this.session = this.engine.createSession(
       {
         exercise,
         locale: this.options.locale ?? 'en',
         difficulty: options.difficulty,
         minGrade: this.features.minGrade ?? undefined,
+        debug,
         features: {
           angles: this.features.angles,
           recommendations: this.features.recommendations,
@@ -1031,6 +1043,10 @@ export class PoseTrackerClient {
         },
       },
       (event) => this.emitFromSession(event),
+    );
+    this.options.onDiagnostic?.(
+      `[posetracker] startExercise id=${exercise.id} difficulty=${options.difficulty ?? 'medium'} ` +
+        `debug=${debug} engine=${this.engine.version} minGrade=${this.features.minGrade ?? 'off'}`,
     );
   }
 
@@ -1258,7 +1274,11 @@ export class PoseTrackerClient {
       // Skip the classic-message conversion entirely (per-frame allocation).
       return;
     }
-    const classic: ClassicNativeMessage = toClassicNativeMessage(event);
+    const classic = toClassicNativeMessage(event);
+    if (classic == null) {
+      // SDK-only events (e.g. engine_debug) have no classic equivalent.
+      return;
+    }
     this.messageListeners.forEach((l) => {
       try {
         l(classic);

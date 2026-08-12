@@ -36,6 +36,11 @@ export interface EngineSessionOptions {
     minGrade?: MinGrade;
     /** Emission flags — engines older than 1.1.0 ignore them (client re-filters). */
     features?: EngineSessionFeatures;
+    /**
+     * When true, the engine emits throttled `engine_debug` events (movement
+     * FSM snapshot). Requires engine bundle ≥ 1.2.4. Ignored by older engines.
+     */
+    debug?: boolean;
 }
 export interface EngineSession {
     /** Feed one estimated pose; the session emits events through the sink. */

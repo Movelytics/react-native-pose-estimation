@@ -8,8 +8,22 @@ Versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-08-12
+
 ### Added
 
+- Optional `debugEngine` / `startExercise(..., { debug: true })` → throttled `engine_debug` events (QA; requires remote engine ≥ 1.2.4)
+- `onEngineDebug` callback on the provider event surface
+
+### Notes
+
+- Exercise counting (e.g. V3 squat `leg_ratio` FSM) is served by the **remote engine** via `configure` — not by this npm bump. Production apps on **0.2.0** already count correctly once Strapi serves engine meta **0.4.0** / `ENGINE_VERSION` **1.3.0**.
+
+## [0.2.0] — 2026-08-11
+
+### Added
+
+- Camera / video / image media sources
 - Branded loading UI + plan-gated watermark
 - Default PoseTracker skeleton theme + `skeletonUuid` / `skeletonDef`
 - Cold-start modes: `basic` (no camera) vs `full`

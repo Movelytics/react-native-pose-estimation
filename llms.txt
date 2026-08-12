@@ -38,8 +38,15 @@ npm install @pose-tracker/react-native-pose-estimation react-native-webview
 npm install @pose-tracker/react-native-pose-estimation-light react-native-webview
 ```
 
+## Canonical product facts (media)
+
+- Input sources (v0.2.0): camera (default) · video · image — both offline + light
+- RN props: `source`, `sourceUri`, `sourceBase64`, `sourceMime` (host picks file; no SDK picker)
+- Runtime: `__PT_SET_SOURCE`, `__PT_ANALYZE` — details in docs/MEDIA_SOURCES.md
+
 ## Key docs (markdown)
 
+- docs/MEDIA_SOURCES.md — camera / video / image (RN + web API tables)
 - docs/PERMISSIONS.md — camera permission setup (required)
 - docs/PRELOAD.md — preload / cold-start basic vs full
 - docs/FEATURES.md — plan gating, loading text, watermark
@@ -50,6 +57,7 @@ npm install @pose-tracker/react-native-pose-estimation-light react-native-webvie
 - AGENTS.md — short dual-SDK policy pointer for coding agents
 - packages/pose-estimation-react-native/README.md — offline package landing
 - packages/pose-estimation-react-native-light/README.md — light package landing
+- Public: https://docs.posetracker.com/media-sources
 
 ## For coding agents
 
