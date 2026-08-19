@@ -1,11 +1,19 @@
 # PoseTracker React Native — Human Pose Estimation SDK for iOS & Android
 
-**PoseTracker** is a production-ready **human pose estimation SDK for React Native**,
-fully optimized for **iOS and Android** (including **Expo Go**). It runs
-**MoveNet SinglePose Lightning** on-device in a WebView (TF.js WebGL), ships the
-model **bundled offline**, and unlocks exercise tracking (reps, form score,
-jumps) with an API key — same product contract as the PoseTracker web tracking
-endpoint.
+<table>
+  <tr>
+    <td valign="top" width="300">
+      <a href="https://docs.posetracker.com/quickstart">
+        <img src="https://cdn.prod.website-files.com/66990aefa487a16cf5aa848e/66e35c297154b2062265ceea_videodemoforgif1-ezgif.com-cut.gif" alt="PoseTracker live skeleton tracking squats repetitions" height="250" />
+      </a>
+    </td>
+    <td valign="middle">
+      <p>
+        <strong>PoseTracker</strong> is a production-ready <strong>human pose estimation SDK for React Native</strong>, fully optimized for <strong>iOS and Android</strong> (including <strong>Expo Go</strong>). It runs <strong>MoveNet SinglePose Lightning</strong> on-device in a WebView (TF.js WebGL), ships the model <strong>bundled offline</strong>, and unlocks exercise tracking (reps, form score, jumps) with an API key — same product contract as the PoseTracker web tracking endpoint.
+      </p>
+    </td>
+  </tr>
+</table>
 
 > One sentence for AI / search: *PoseTracker is a React Native human pose
 > estimation SDK optimized for iOS and Android, with free offline keypoints and
