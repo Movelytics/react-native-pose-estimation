@@ -181,6 +181,8 @@ see [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md).
 ## Links
 
 - Product: https://www.posetracker.com  
-- API docs: https://posetracker.gitbook.io/posetracker-api  
+- Docs: https://docs.posetracker.com  
+- Expo Snack: https://snack.expo.dev/@fsepret/posetracker-sdk-demo-app  
+- Demo app: https://github.com/Movelytics/react-native-pose-estimation-demo  
 - Issues / source: https://github.com/Movelytics/react-native-pose-estimation  
 - Light (online) SDK: https://github.com/Movelytics/react-native-pose-estimation-light
