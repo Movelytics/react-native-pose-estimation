@@ -2,10 +2,17 @@
 
 **⭐ Star us on GitHub:** [Movelytics/react-native-pose-estimation](https://github.com/Movelytics/react-native-pose-estimation) — it helps other React Native and Expo developers find the SDK.
 
+**Try it on your phone (no Xcode / Android Studio):**
+1. Install [Expo Go](https://expo.dev/go)
+2. Open the [Expo Snack](https://snack.expo.dev/@fsepret/posetracker-sdk-demo-app) → **Run on device**
+3. Scan the QR — live pose estimation, no API key
+
+Steps and QR: https://docs.posetracker.com/try-expo-go
+
 <table>
   <tr>
     <td valign="top" width="300">
-      <a href="https://docs.posetracker.com/quickstart">
+      <a href="https://docs.posetracker.com/try-expo-go">
         <img src="https://cdn.prod.website-files.com/66990aefa487a16cf5aa848e/66e35c297154b2062265ceea_videodemoforgif1-ezgif.com-cut.gif" alt="PoseTracker live skeleton tracking squats repetitions" height="250" />
       </a>
     </td>
@@ -182,6 +189,7 @@ see [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md).
 
 - Product: https://www.posetracker.com  
 - Docs: https://docs.posetracker.com  
+- Try on your phone: https://docs.posetracker.com/try-expo-go  
 - Expo Snack: https://snack.expo.dev/@fsepret/posetracker-sdk-demo-app  
 - Demo app: https://github.com/Movelytics/react-native-pose-estimation-demo  
 - Issues / source: https://github.com/Movelytics/react-native-pose-estimation  
