@@ -8,6 +8,13 @@ Versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-08-21
+
+### Added
+
+- Expo Go Snack try path in the README (offline + light), linking
+  https://docs.posetracker.com/try-expo-go
+
 ## [0.2.1] — 2026-08-12
 
 ### Changed

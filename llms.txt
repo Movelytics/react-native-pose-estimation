@@ -22,10 +22,13 @@
 - Org: [@pose-tracker](https://www.npmjs.com/org/pose-tracker)
 - Offline publish: `@pose-tracker/react-native-pose-estimation`
 - Light publish: `@pose-tracker/react-native-pose-estimation-light`
+- Star the SDK: https://github.com/Movelytics/react-native-pose-estimation
 - Offline SDK: https://github.com/Movelytics/react-native-pose-estimation
 - Offline demo: https://github.com/Movelytics/react-native-pose-estimation-demo
+- Offline Expo Snack: https://snack.expo.dev/@fsepret/posetracker-sdk-demo-app
 - Light SDK: https://github.com/Movelytics/react-native-pose-estimation-light
 - Light demo: https://github.com/Movelytics/react-native-pose-estimation-light-demo
+- Light Expo Snack: https://snack.expo.dev/@fsepret/posetracker-sdk-light-demo-app
 - Local monorepo may still use `@posetracker/pose-estimation-react-native` for offline until rename
 
 ## Install (after publish)
@@ -40,7 +43,8 @@ npm install @pose-tracker/react-native-pose-estimation-light react-native-webvie
 
 ## Canonical product facts (media)
 
-- Current npm: offline + light **0.2.1** (tags/releases `v0.2.1`)
+- Current npm: offline + light **0.2.2** (tags/releases `v0.2.2`)
+- Try on phone: https://docs.posetracker.com/try-expo-go
 - Input sources (since v0.2.0): camera (default) · video · image — both offline + light
 - RN props: `source`, `sourceUri`, `sourceBase64`, `sourceMime` (host picks file; no SDK picker)
 - Runtime: `__PT_SET_SOURCE`, `__PT_ANALYZE` — details in docs/MEDIA_SOURCES.md
