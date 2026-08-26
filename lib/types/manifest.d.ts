@@ -126,6 +126,8 @@ export interface EngineBundleDescriptor {
     minSdkVersion: string;
     /** True when the version sent in `localVersions.engine` is already current. */
     upToDate?: boolean;
+    /** Which interpreter this descriptor is. Absent on older backends = v3. */
+    channel?: 'v3' | 'v4';
 }
 export interface PoseRuntimePartDescriptor {
     /** Download URL of this part (`GET /api/sdk/pose-runtime?part=...&v=...`). */
@@ -166,6 +168,11 @@ export interface ConfigureRequest {
         poseRuntime?: string | null;
         engine?: string | null;
     };
+    /**
+     * Which remote engine to download. Default / omitted = v3 (production).
+     * `v4` is opt-in (heuristic catalog: squat, shoulder_roll, …).
+     */
+    engineChannel?: 'v3' | 'v4';
 }
 export interface PlanInfo {
     plan: string;

@@ -38,6 +38,7 @@ import type { PoseBackend, PoseInputFrame } from './backends/PoseBackend';
 import { VisionPoseBackend } from './backends/vision/VisionPoseBackend';
 import { WebViewPoseBackend } from './backends/webview/WebViewPoseBackend';
 import { findExerciseByIdOrAlias } from './exercises/aliases';
+import { normalizeEngineChannel, requiresEngineV4, type EngineChannel } from './engineChannel';
 import { fetchSkeletonDefinition } from './api/skeleton';
 import type { ExerciseConfig, ModelDescriptor, SdkManifest } from './types/manifest';
 import type { ColdStartMode, PreloadOptions } from './types/preload';
@@ -957,7 +958,32 @@ export class PoseTrackerClient {
   // -------------------------------------------------------------------------
 
   getAvailableExercises(): ExerciseConfig[] {
-    return this.mode === 'full-engine' ? this.manifest?.exercises ?? [] : [];
+    if (this.mode !== 'full-engine') return [];
+    if (normalizeEngineChannel(this.options.engine) === 'v4') {
+      const listed = this.engine?.listExercises?.() ?? [];
+      if (listed.length) return listed.map((e) => this.v4ExerciseConfig(e));
+    }
+    return this.manifest?.exercises ?? [];
+  }
+
+  getEngineChannel(): EngineChannel {
+    return normalizeEngineChannel(this.options.engine);
+  }
+
+  private v4ExerciseConfig(entry: { id: string; displayName?: string; type?: string }): ExerciseConfig {
+    const type = entry.type === 'static' ? 'static' : 'dynamic';
+    return {
+      id: entry.id,
+      name: entry.displayName || entry.id,
+      type,
+      movement: {
+        name: entry.id,
+        type,
+        scale_acceptance: {},
+        movement_steps: [],
+        movement_initial_posture: null,
+      },
+    };
   }
 
   /**
@@ -1006,6 +1032,30 @@ export class PoseTrackerClient {
         throw new Error(FREE_PLAN_FEATURES_MESSAGE);
       }
     }
+    if (requiresEngineV4(exerciseId) && normalizeEngineChannel(this.options.engine) !== 'v4') {
+      const message = `Exercise '${exerciseId}' requires engine: 'v4'`;
+      this.reportError({ type: 'error', code: 'invalid_exercise', message });
+      throw new Error(message);
+    }
+    if (normalizeEngineChannel(this.options.engine) === 'v4') {
+      const listed = this.engine.listExercises?.() ?? [];
+      const v4Hit = listed.find((e) => e.id === exerciseId);
+      if (v4Hit) {
+        this.beginEngineSession(this.v4ExerciseConfig(v4Hit), options);
+        return;
+      }
+      const customs = this.getAvailableCustomExercises();
+      const custom =
+        customs.find((e) => e.id === exerciseId) ??
+        findExerciseByIdOrAlias(exerciseId, customs);
+      if (custom) {
+        this.startCustomExercise(custom, options);
+        return;
+      }
+      const message = `Exercise '${exerciseId}' is not available in V4 engine`;
+      this.reportError({ type: 'error', code: 'invalid_exercise', message });
+      throw new Error(message);
+    }
     const available = this.getAvailableExercises();
     const exercise = findExerciseByIdOrAlias(exerciseId, available);
     if (!exercise) {
@@ -1024,8 +1074,13 @@ export class PoseTrackerClient {
       this.reportError({ type: 'error', code: 'invalid_exercise', message });
       throw new Error(message);
     }
+    this.beginEngineSession(exercise, options);
+  }
+
+  private beginEngineSession(exercise: ExerciseConfig, options: StartExerciseOptions): void {
+    if (!this.engine) return;
     this.stopExercise();
-    this.currentExerciseId = exerciseId;
+    this.currentExerciseId = exercise.id;
     this.keypointsSuppressionLogged = false;
     const debug = options.debug ?? this.options.debugEngine === true;
     this.session = this.engine.createSession(

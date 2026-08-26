@@ -8,6 +8,22 @@ Versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-08-26
+
+### Added
+
+- Opt-in engine channel `engine: 'v4'` on `PoseTrackerProvider` / `configure()` (default remains `'v3'`).
+- Handshake sends `engineChannel`; V4 downloads `engine-v4.bundle.js` (remote engine `4.0.0`).
+- V4 catalog: `squat`, `shoulder_roll`, `shoulder_deep_breath`, `chair_forward_fold`.
+- V4-only ids on a V3 client throw `Exercise 'x' requires engine: 'v4'` (no silent fallback).
+- `getEngineChannel()`, `listExercises()` on the V4 bundle, `exercise_summary` on V4 `stopExercise()`.
+
+### Notes
+
+- Jumps (`jump_analysis`, `air_time_jump`) stay V3-only.
+- V4 does not emit `recommendations`.
+- Apps on **0.2.x** are unchanged (handshake without `engineChannel` still gets V3).
+
 ## [0.2.2] — 2026-08-21
 
 ### Added

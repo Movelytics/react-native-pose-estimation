@@ -28,6 +28,7 @@ import { EngineLoader, type EngineLoadResult, type FileStore } from './engine/En
 import type { PoseRuntimeParts } from './runtime/RuntimeCache';
 import type { CustomExerciseDescriptor } from './engine/types';
 import type { PoseBackend, PoseInputFrame } from './backends/PoseBackend';
+import { type EngineChannel } from './engineChannel';
 import type { ExerciseConfig, SdkManifest } from './types/manifest';
 import type { ColdStartMode, PreloadOptions } from './types/preload';
 import type { SkeletonDefinition } from './types/skeleton';
@@ -311,6 +312,8 @@ export declare class PoseTrackerClient {
     private validateRequestedFeatures;
     private resolveModel;
     getAvailableExercises(): ExerciseConfig[];
+    getEngineChannel(): EngineChannel;
+    private v4ExerciseConfig;
     /**
      * Custom exercises shipped inside the engine bundle (jump_analysis,
      * air_time_jump — WebView `customHandlers.js` parity). Empty in
@@ -318,6 +321,7 @@ export declare class PoseTrackerClient {
      */
     getAvailableCustomExercises(): CustomExerciseDescriptor[];
     startExercise(exerciseId: string, options?: StartExerciseOptions): void;
+    private beginEngineSession;
     /** Custom engine session (jump_analysis / air_time_jump). */
     private startCustomExercise;
     /**

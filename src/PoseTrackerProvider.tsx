@@ -106,6 +106,11 @@ const PoseTrackerContext = createContext<PoseTrackerContextValue | null>(null);
 export interface PoseTrackerProviderProps {
   /** Optional: without a token the SDK runs in keypoints-only mode. */
   apiToken?: string;
+  /**
+   * Opt-in V4 engine (`'v4'`). Default `'v3'` — production FSM, unchanged.
+   * Merged into `options.engine` when both are set, this prop wins.
+   */
+  engine?: 'v3' | 'v4';
   options?: PoseTrackerClientOptions;
   /** Start preloading as soon as the provider mounts. Default: false. */
   autoPreload?: boolean;
@@ -114,13 +119,17 @@ export interface PoseTrackerProviderProps {
 
 export function PoseTrackerProvider({
   apiToken,
+  engine,
   options,
   autoPreload = false,
   children,
 }: PoseTrackerProviderProps): React.JSX.Element {
   const clientRef = useRef<PoseTrackerClient | null>(null);
   if (!clientRef.current) {
-    clientRef.current = new PoseTrackerClient(apiToken, options);
+    clientRef.current = new PoseTrackerClient(apiToken, {
+      ...options,
+      engine: engine ?? options?.engine,
+    });
   }
   const client = clientRef.current;
 

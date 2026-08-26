@@ -78,6 +78,13 @@ export interface PoseTrackerEngine {
     createSession(options: EngineSessionOptions, emit: EventSink): EngineSession;
     /** Engine >= 1.2.0: custom exercises shipped in the bundle (jump analysis…). */
     listCustomExercises?(): CustomExerciseDescriptor[];
+    /** Engine V4 catalog (opt-in channel). Absent on V3 bundles. */
+    listExercises?(): Array<{
+        id: string;
+        displayName: string;
+        type: string;
+        description?: string;
+    }>;
     /** Engine >= 1.2.0: start a custom exercise session (placement + jump_* events). */
     createCustomSession?(options: CustomSessionOptions, emit: EventSink): EngineSession;
 }

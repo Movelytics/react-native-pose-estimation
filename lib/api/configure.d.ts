@@ -11,6 +11,7 @@
  */
 import { SDK_VERSION } from '../sdkVersion';
 import type { ConfigureRequest, PoseModelProfile, SdkManifest } from '../types/manifest';
+import type { EngineChannel } from '../engineChannel';
 export declare const SDK_NAME: "posetracker-rn";
 export { SDK_VERSION };
 /** Overridable for staging/self-hosted backends. */
@@ -21,6 +22,11 @@ export interface ConfigureOptions {
     locale?: string;
     /** Local cache versions, so the backend can answer `upToDate` per module. */
     localVersions?: ConfigureRequest['localVersions'];
+    /**
+     * Opt-in V4 heuristic engine. Default `'v3'` (production FSM).
+     * Set `'v4'` at init — the handshake downloads `engine-v4.bundle.js`.
+     */
+    engine?: EngineChannel;
 }
 export declare class ConfigureError extends Error {
     readonly code: 'invalid_token' | 'quota_exceeded' | 'network' | 'internal';

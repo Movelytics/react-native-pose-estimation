@@ -39,6 +39,8 @@ export {
 // Orchestrator + React layer
 export { PoseTrackerClient } from './client';
 export type { PoseTrackerClientOptions, PreferredBackend, StartExerciseOptions } from './client';
+export type { EngineChannel } from './engineChannel';
+export { V4_ONLY_EXERCISE_IDS, normalizeEngineChannel, requiresEngineV4 } from './engineChannel';
 export type { ColdStartMode, PreloadOptions } from './types/preload';
 export type {
   SkeletonAnglesStyle,

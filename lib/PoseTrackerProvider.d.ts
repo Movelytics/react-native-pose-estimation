@@ -83,12 +83,17 @@ export interface PoseTrackerContextValue {
 export interface PoseTrackerProviderProps {
     /** Optional: without a token the SDK runs in keypoints-only mode. */
     apiToken?: string;
+    /**
+     * Opt-in V4 engine (`'v4'`). Default `'v3'` — production FSM, unchanged.
+     * Merged into `options.engine` when both are set, this prop wins.
+     */
+    engine?: 'v3' | 'v4';
     options?: PoseTrackerClientOptions;
     /** Start preloading as soon as the provider mounts. Default: false. */
     autoPreload?: boolean;
     children: React.ReactNode;
 }
-export declare function PoseTrackerProvider({ apiToken, options, autoPreload, children, }: PoseTrackerProviderProps): React.JSX.Element;
+export declare function PoseTrackerProvider({ apiToken, engine, options, autoPreload, children, }: PoseTrackerProviderProps): React.JSX.Element;
 /**
  * Access the PoseTracker pipeline and subscribe to typed events.
  *
