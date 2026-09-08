@@ -200,8 +200,8 @@ export interface ConfigureRequest {
     engine?: string | null;
   };
   /**
-   * Which remote engine to download. Default / omitted = v3 (production).
-   * `v4` is opt-in (heuristic catalog: squat, shoulder_roll, …).
+   * Which remote engine to download. New SDKs send `'v4'` by default.
+   * Omitted (0.2.x) still means V3 on the server. `'v3'` forces the FSM bundle.
    */
   engineChannel?: 'v3' | 'v4';
 }

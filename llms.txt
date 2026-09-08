@@ -43,8 +43,8 @@ npm install @pose-tracker/react-native-pose-estimation-light react-native-webvie
 
 ## Canonical product facts (media)
 
-- Current npm: offline + light **0.3.0** (tags/releases `v0.3.0`)
-- Engine default: V3. Opt-in V4: `engine: 'v4'` at Provider (SDK 0.3.0+)
+- Current npm: offline + light **0.3.1** (tags/releases `v0.3.1`)
+- Engine default: V4. Unlabeled squat stays V3 FSM. Catalog squat: `engine: 'v4'`. V3 bundle: `engine: 'v3'` (SDK 0.3.1+)
 - Try on phone: https://docs.posetracker.com/try-expo-go
 - Input sources (since v0.2.0): camera (default) · video · image — both offline + light
 - RN props: `source`, `sourceUri`, `sourceBase64`, `sourceMime` (host picks file; no SDK picker)

@@ -8,6 +8,20 @@ Versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-09-08
+
+### Changed
+
+- Handshake default is now **V4** (`engineChannel: 'v4'` unless `engine: 'v3'`).
+- Unlabeled `startExercise('squat')` / `face_squat` still runs the production V3 FSM (embedded in `engine-v4.bundle.js`).
+- Pass `engine: 'v4'` at the Provider for the V4 catalog squat; `engine: 'v3'` for the full V3 bundle.
+- V4-only ids (`shoulder_roll`, …) work on the default handshake (no extra flag).
+
+### Notes
+
+- Apps on **0.3.0** still default to V3 until they upgrade. **0.2.x** still omits `engineChannel` and stays on V3.
+- V4 does not emit `recommendations`. V4 does emit `progression`.
+
 ## [0.3.0] — 2026-08-26
 
 ### Added

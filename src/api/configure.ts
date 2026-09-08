@@ -30,8 +30,9 @@ export interface ConfigureOptions {
   /** Local cache versions, so the backend can answer `upToDate` per module. */
   localVersions?: ConfigureRequest['localVersions'];
   /**
-   * Opt-in V4 heuristic engine. Default `'v3'` (production FSM).
-   * Set `'v4'` at init — the handshake downloads `engine-v4.bundle.js`.
+   * Remote engine channel. Default `'v4'`. Pass `'v3'` for the production FSM
+   * bundle. Unlabeled `startExercise('squat')` stays on the V3 squat FSM even
+   * on the V4 channel unless `engine` is explicitly `'v4'`.
    */
   engine?: EngineChannel;
 }
@@ -59,7 +60,7 @@ export async function configure(
     poseModelProfile: options.poseModelProfile ?? 'AdaptiveChoice',
     locale: options.locale,
     localVersions: options.localVersions,
-    engineChannel: options.engine === 'v4' ? 'v4' : 'v3',
+    engineChannel: options.engine === 'v3' ? 'v3' : 'v4',
   };
 
   let response: Response;

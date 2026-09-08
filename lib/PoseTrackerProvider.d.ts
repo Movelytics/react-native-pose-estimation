@@ -84,8 +84,9 @@ export interface PoseTrackerProviderProps {
     /** Optional: without a token the SDK runs in keypoints-only mode. */
     apiToken?: string;
     /**
-     * Opt-in V4 engine (`'v4'`). Default `'v3'` — production FSM, unchanged.
-     * Merged into `options.engine` when both are set, this prop wins.
+     * Remote engine. Default `'v4'`. Pass `'v3'` for the production FSM bundle.
+     * Unlabeled `startExercise('squat')` still uses the V3 squat FSM unless this
+     * is explicitly `'v4'`. Merged into `options.engine`; this prop wins.
      */
     engine?: 'v3' | 'v4';
     options?: PoseTrackerClientOptions;

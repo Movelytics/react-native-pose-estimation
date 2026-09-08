@@ -41,6 +41,11 @@ export interface EngineSessionOptions {
      * Ignored by older engines.
      */
     debug?: boolean;
+    /**
+     * Run the V4 catalog squat instead of the production V3 FSM.
+     * Set when the host passed `engine: 'v4'` explicitly.
+     */
+    v4CatalogSquat?: boolean;
 }
 export interface EngineSession {
     /** Feed one estimated pose; the session emits events through the sink. */
