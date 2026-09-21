@@ -11,6 +11,9 @@ itself always runs at 192×192.
 Inspired by Sency’s `AdaptiveChoice` + `TfliteRuntimeGuard` (see
 `sency-teardown/findings/SENCY_TEARDOWN.md`).
 
+Host WebView / Activity flags that sit *outside* this ladder (hardware
+acceleration, no software layer, System WebView): [`HOST_WEBVIEW_PERF.md`](./HOST_WEBVIEW_PERF.md).
+
 ---
 
 ## 0. Capture priority (FPS vs preview sharpness)
@@ -97,7 +100,8 @@ Flag file: [`src/quality/captureMode.ts`](../packages/pose-estimation-react-nati
 |----------|----------------------|------------------------|
 | `CAPTURE_CONSTRAINT_MODE` | `'device-native'` | `'profile-constrained'` |
 | `ENABLE_MALI_HARD_CAP` | `false` | `true` |
-| `ANDROID_INFER_FRAME_SKIP` | `1` | `0` (iOS forced 0) |
+| `ANDROID_INFER_FRAME_SKIP` | `1` (MoveNet) | `0` (iOS forced 0) |
+| `ANDROID_INFER_FRAME_SKIP_BLAZEPOSE` | `2` (`model: 'blazepose'` only) | n/a (iOS forced 0) |
 | `ANDROID_PREPROCESS_PATH` | `'canvas-direct'` | `'imagebitmap'` (iOS) |
 | `ANDROID_SOFT_CAP_PROFILE` | `'basic'` (320×240 max) | `null` (iOS) |
 | `ANDROID_MIN_TARGET_FPS` | `10` | `15` (iOS stays 30) |

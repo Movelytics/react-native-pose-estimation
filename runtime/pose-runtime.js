@@ -1,25 +1,60 @@
 /**
  * PoseTracker pose-runtime — the WebView page runtime (camera, capture
- * presets, MoveNet inference loop, skeleton, events). Delivered at runtime
- * as the `pose-runtime.js` part of the pose-runtime payload; NEVER shipped
- * in the npm package.
+ * presets, MoveNet / BlazePose inference loop, skeleton, events). Bundled
+ * in the offline npm package (TF.js + MoveNet). BlazePose is opt-in and
+ * loads `@tensorflow-models/pose-detection` from CDN (not bundled).
  *
  * Expects the following globals injected by the SDK HTML assembler:
  *   __PT_BUILD, __PT_CONFIG, __PT_MODEL_JSON, __PT_WEIGHTS_B64,
  *   __PT_WASM_B64 (tfjs XNNPACK binaries), __PT_PIPELINE_WASM_B64
  *   (proprietary pose pipeline, see runtime/pipeline/index.ts).
+ *   __PT_MODEL_ID / __PT_MODEL_KIND — e.g. blazepose (no graph artifacts).
+ *
+ * BlazePose: requires CDN `window.poseDetection` (injected when model=blazepose).
+ * Keypoints are mapped to COCO-17 (extra BlazePose joints dropped).
  */
 (function () {
   var CFG = window.__PT_CONFIG;
   var FACING = CFG.facingMode;
   var MIN_SCORE = CFG.minScore;
   var INPUT_SIZE = 192;
+  /** BlazePose TF.js detector input (contain letterbox). Do not reuse MoveNet 192. */
+  var BLAZE_INPUT_SIZE = 256;
+  var MODEL_ID =
+    (CFG.modelId && String(CFG.modelId)) ||
+    (typeof window.__PT_MODEL_ID === 'string' && window.__PT_MODEL_ID) ||
+    'movenet-singlepose-lightning';
+  var MODEL_KIND =
+    (CFG.modelKind && String(CFG.modelKind)) ||
+    (typeof window.__PT_MODEL_KIND === 'string' && window.__PT_MODEL_KIND) ||
+    (MODEL_ID === 'blazepose' ? 'blazepose' : 'movenet-graph');
+  var IS_BLAZEPOSE = MODEL_KIND === 'blazepose' || MODEL_ID === 'blazepose';
   var KEYPOINT_NAMES = [
     'nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear',
     'left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow',
     'left_wrist', 'right_wrist', 'left_hip', 'right_hip',
     'left_knee', 'right_knee', 'left_ankle', 'right_ankle'
   ];
+  /** MediaPipe BlazePose landmark names → COCO-17 (extras dropped). */
+  var BLAZE_TO_COCO = {
+    nose: 'nose',
+    left_eye: 'left_eye',
+    right_eye: 'right_eye',
+    left_ear: 'left_ear',
+    right_ear: 'right_ear',
+    left_shoulder: 'left_shoulder',
+    right_shoulder: 'right_shoulder',
+    left_elbow: 'left_elbow',
+    right_elbow: 'right_elbow',
+    left_wrist: 'left_wrist',
+    right_wrist: 'right_wrist',
+    left_hip: 'left_hip',
+    right_hip: 'right_hip',
+    left_knee: 'left_knee',
+    right_knee: 'right_knee',
+    left_ankle: 'left_ankle',
+    right_ankle: 'right_ankle'
+  };
 
   /**
    * Default skeleton — same document as PoseTrackerFront
@@ -162,6 +197,7 @@
     });
   }
   var model = null;
+  var blazeDetector = null;
   var running = false;
   var busy = false;
   // Android experiment: skip N ready rAF ticks between inferences (iOS = 0).
@@ -189,7 +225,10 @@
   var activeBackend = null;
   // Letterbox params for the last pose input (contain into 192×192).
   // Needed to map MoveNet [0,1] square coords → video pixels → object-fit:cover display.
-  var letterbox = { offsetX: 0, offsetY: 0, drawW: INPUT_SIZE, drawH: INPUT_SIZE, vw: 1, vh: 1 };
+  var letterbox = {
+    offsetX: 0, offsetY: 0, drawW: INPUT_SIZE, drawH: INPUT_SIZE,
+    vw: 1, vh: 1, poseSize: INPUT_SIZE
+  };
 
   function post(msg) {
     try {
@@ -346,6 +385,13 @@
   }
 
   async function benchZeros(n) {
+    if (IS_BLAZEPOSE) {
+      // No graph execute — seed a conservative median so AdaptiveChoice
+      // prefers a lower capture tier (BlazePose is heavier than MoveNet).
+      var seeded = [];
+      for (var i = 0; i < Math.max(1, n - 1); i++) seeded.push(55);
+      return seeded;
+    }
     var times = [];
     for (var i = 0; i < n; i++) {
       var z = tf.zeros([1, INPUT_SIZE, INPUT_SIZE, 3], 'int32');
@@ -360,6 +406,30 @@
   }
 
   async function loadModel() {
+    if (IS_BLAZEPOSE) {
+      if (blazeDetector && blazeDetector.dispose) {
+        try { blazeDetector.dispose(); } catch (e) {}
+      }
+      blazeDetector = null;
+      var poseDetection = window.poseDetection;
+      if (!poseDetection || typeof poseDetection.createDetector !== 'function') {
+        throw new Error(
+          'BlazePose requires CDN `@tensorflow-models/pose-detection` ' +
+            '(window.poseDetection missing)'
+        );
+      }
+      post({
+        type: 'diag',
+        message: 'createDetector BlazePose lite (tfjs) — CDN, not bundled'
+      });
+      blazeDetector = await poseDetection.createDetector(
+        poseDetection.SupportedModels.BlazePose,
+        { runtime: 'tfjs', modelType: 'lite', enableSmoothing: false }
+      );
+      model = { kind: 'blazepose' };
+      return;
+    }
+
     if (model && model.dispose) try { model.dispose(); } catch (e) {}
     model = await tf.loadGraphModel({
       load: function () { return Promise.resolve(buildModelArtifacts()); }
@@ -450,37 +520,51 @@
     return { name: 'wasm', med: median(wtimes), times: wtimes, backend: 'wasm' };
   }
 
-  function poseCanvasCtx() {
-    if (!window.__PT_FC) {
+  function poseCanvasCtx(poseSize) {
+    var size = poseSize || INPUT_SIZE;
+    if (
+      !window.__PT_FC ||
+      window.__PT_FC.width !== size ||
+      window.__PT_FC.height !== size
+    ) {
       window.__PT_FC = document.createElement('canvas');
-      window.__PT_FC.width = INPUT_SIZE;
-      window.__PT_FC.height = INPUT_SIZE;
+      window.__PT_FC.width = size;
+      window.__PT_FC.height = size;
       window.__PT_FCTX = window.__PT_FC.getContext('2d', { willReadFrequently: true });
     }
     return window.__PT_FCTX;
   }
 
   /**
-   * Letterbox video → 192×192 canvas (contain). Stretching with
-   * resizeWidth/Height=192 broke aspect ratio → wrong skeleton.
-   * Returns either an ImageBitmap or the canvas itself for fromPixels.
+   * Letterbox video → poseSize² canvas (contain). MoveNet uses 192; BlazePose 256.
+   * Stretching with resizeWidth/Height broke aspect ratio → wrong skeleton.
+   * Returns either an ImageBitmap or the canvas itself for fromPixels / estimatePoses.
    */
-  async function preparePoseInput() {
+  async function preparePoseInput(poseSize) {
+    var size = poseSize || INPUT_SIZE;
     var t0 = performance.now();
     var frame = activeFrame();
     var sz = frameSize();
     var vw = sz.vw || 1;
     var vh = sz.vh || 1;
-    var scale = Math.min(INPUT_SIZE / vw, INPUT_SIZE / vh);
+    var scale = Math.min(size / vw, size / vh);
     var drawW = vw * scale;
     var drawH = vh * scale;
-    var offsetX = (INPUT_SIZE - drawW) / 2;
-    var offsetY = (INPUT_SIZE - drawH) / 2;
-    letterbox = { offsetX: offsetX, offsetY: offsetY, drawW: drawW, drawH: drawH, vw: vw, vh: vh };
+    var offsetX = (size - drawW) / 2;
+    var offsetY = (size - drawH) / 2;
+    letterbox = {
+      offsetX: offsetX,
+      offsetY: offsetY,
+      drawW: drawW,
+      drawH: drawH,
+      vw: vw,
+      vh: vh,
+      poseSize: size
+    };
 
-    var c2d = poseCanvasCtx();
+    var c2d = poseCanvasCtx(size);
     c2d.fillStyle = '#000';
-    c2d.fillRect(0, 0, INPUT_SIZE, INPUT_SIZE);
+    c2d.fillRect(0, 0, size, size);
     c2d.drawImage(frame, 0, 0, vw, vh, offsetX, offsetY, drawW, drawH);
 
     if (PREPROCESS_PATH === 'canvas-direct') {
@@ -493,10 +577,11 @@
     return { kind: 'bitmap', source: bmp };
   }
 
-  /** MoveNet norm (0–1 over the 192 square) → video pixel coords. (JS fallback) */
+  /** MoveNet norm (0–1 over the letterboxed square) → video pixel coords. (JS fallback) */
   function modelNormToVideo(xNorm, yNorm) {
-    var xSq = xNorm * INPUT_SIZE;
-    var ySq = yNorm * INPUT_SIZE;
+    var poseSize = letterbox.poseSize || INPUT_SIZE;
+    var xSq = xNorm * poseSize;
+    var ySq = yNorm * poseSize;
     return {
       x: (xSq - letterbox.offsetX) * (letterbox.vw / letterbox.drawW),
       y: (ySq - letterbox.offsetY) * (letterbox.vh / letterbox.drawH)
@@ -512,6 +597,23 @@
   }
 
   async function infer() {
+    if (IS_BLAZEPOSE) {
+      if (!blazeDetector) throw new Error('BlazePose detector not loaded');
+      var t0b = performance.now();
+      var preparedB = await preparePoseInput(BLAZE_INPUT_SIZE);
+      var poses = await blazeDetector.estimatePoses(preparedB.source, {
+        flipHorizontal: false,
+        maxPoses: 1
+      });
+      if (preparedB.kind === 'bitmap' && preparedB.source && preparedB.source.close) {
+        preparedB.source.close();
+      }
+      var totalMsB = performance.now() - t0b;
+      pushStage('exec', totalMsB);
+      pushStage('total', totalMsB);
+      return { kind: 'blazepose', poses: poses, totalMs: totalMsB };
+    }
+
     var t0 = performance.now();
     var prepared = await preparePoseInput();
     var t1 = performance.now();
@@ -533,7 +635,7 @@
     // must see preprocess cost, especially on Android HD capture.
     var totalMs = t3 - t0;
     pushStage('total', totalMs);
-    return { data: data, totalMs: totalMs };
+    return { kind: 'movenet', data: data, totalMs: totalMs };
   }
 
   /** Rank which stage dominates the frame (for leverHints). */
@@ -756,6 +858,86 @@
     return { drawKps: drawKps, rnKps: rnKps, meanScore: scoreSum / 17, above: above };
   }
 
+  function canvasToVideoPx(x, y, maxCoord) {
+    var poseSize = letterbox.poseSize || BLAZE_INPUT_SIZE;
+    var inNorm = maxCoord <= 1.5 && poseSize > 2;
+    var xSq = inNorm ? x * poseSize : x;
+    var ySq = inNorm ? y * poseSize : y;
+    var drawW = letterbox.drawW || poseSize;
+    var drawH = letterbox.drawH || poseSize;
+    return {
+      x: (xSq - letterbox.offsetX) * (letterbox.vw / drawW),
+      y: (ySq - letterbox.offsetY) * (letterbox.vh / drawH)
+    };
+  }
+
+  function decodeBlazePoses(poses, dispW, dispH) {
+    var pose = poses && poses[0];
+    var vw = letterbox.vw || video.videoWidth || 1;
+    var vh = letterbox.vh || video.videoHeight || 1;
+    var byName = {};
+    var maxCoord = 0;
+    if (pose && pose.keypoints) {
+      for (var m = 0; m < pose.keypoints.length; m++) {
+        maxCoord = Math.max(
+          maxCoord,
+          Math.abs(pose.keypoints[m].x || 0),
+          Math.abs(pose.keypoints[m].y || 0)
+        );
+      }
+      for (var i = 0; i < pose.keypoints.length; i++) {
+        var kp = pose.keypoints[i];
+        var name = String(kp.name || '').toLowerCase();
+        var coco = BLAZE_TO_COCO[name];
+        if (!coco) continue;
+        var src = canvasToVideoPx(kp.x, kp.y, maxCoord);
+        byName[coco] = {
+          x: src.x,
+          y: src.y,
+          score: typeof kp.score === 'number' ? kp.score : 0
+        };
+      }
+    }
+    var scale = Math.max(dispW / vw, dispH / vh);
+    var ox = (dispW - vw * scale) / 2;
+    var oy = (dispH - vh * scale) / 2;
+    var drawKps = [];
+    var rnKps = [];
+    var scoreSum = 0;
+    var above = 0;
+    for (var j = 0; j < KEYPOINT_NAMES.length; j++) {
+      var kn = KEYPOINT_NAMES[j];
+      var k = byName[kn] || { x: 0, y: 0, score: 0 };
+      var dx = k.x * scale + ox;
+      var dy = k.y * scale + oy;
+      var nx = dispW > 0 ? dx / dispW : 0;
+      var ny = dispH > 0 ? dy / dispH : 0;
+      if (FACING === 'user') nx = 1 - nx;
+      scoreSum += k.score;
+      if (k.score >= 0.3) above += 1;
+      drawKps.push({
+        name: kn,
+        xPx: k.x,
+        yPx: k.y,
+        dx: dx,
+        dy: dy,
+        score: k.score
+      });
+      rnKps.push({
+        name: kn,
+        x: Math.min(1, Math.max(0, nx)),
+        y: Math.min(1, Math.max(0, ny)),
+        score: k.score
+      });
+    }
+    return {
+      drawKps: drawKps,
+      rnKps: rnKps,
+      meanScore: scoreSum / 17,
+      above: above
+    };
+  }
+
   function decodeAndPublish(data, inferenceTimeMs) {
     // Pipeline (matches PoseTrackerFront):
     //   MoveNet [0,1] on letterboxed 192² → video pixels → object-fit:cover display
@@ -766,6 +948,18 @@
     var decoded = pipeline
       ? decodeWithPipeline(data, dispW, dispH)
       : decodeWithJs(data, dispW, dispH);
+    publishDecoded(decoded, inferenceTimeMs);
+  }
+
+  function decodeAndPublishBlaze(poses, inferenceTimeMs) {
+    var dispW = canvas.clientWidth || 1;
+    var dispH = canvas.clientHeight || 1;
+    publishDecoded(decodeBlazePoses(poses, dispW, dispH), inferenceTimeMs);
+  }
+
+  function publishDecoded(decoded, inferenceTimeMs) {
+    var dispW = canvas.clientWidth || 1;
+    var dispH = canvas.clientHeight || 1;
     var drawKps = decoded.drawKps;
     var meanScore = decoded.meanScore;
     var above = decoded.above;
@@ -791,14 +985,15 @@
       var execMs = median(stageMs.exec);
       var totalMed = median(stageMs.total);
       var estFromMed = med != null && med > 0 ? 1000 / med : null;
+      var modelTag = IS_BLAZEPOSE ? 'blazepose' : 'movenet';
       var modeTag = 'main/' + activeFlags +
-        (pipeline ? '/wasm-pipeline' : '') +
+        (pipeline && !IS_BLAZEPOSE ? '/wasm-pipeline' : '') +
         '/' + PREPROCESS_PATH +
         (INFER_FRAME_SKIP > 0 ? '/skip' + INFER_FRAME_SKIP : '') +
         (SOFT_CAP_PROFILE ? '/soft:' + SOFT_CAP_PROFILE : '');
 
       var hudLine =
-        'movenet · ' + activeBackend + '/' + activeFlags + ' · ' +
+        modelTag + ' · ' + activeBackend + '/' + activeFlags + ' · ' +
         fps + ' fps · ' + (med != null ? Math.round(med) + ' ms' : '?') +
         ' · kp≥0.3=' + above + '/17';
       if (PERF_DEBUG) {
@@ -889,7 +1084,11 @@
           var result = await infer();
           inferErrorStreak = 0;
           inferTicksWindow += 1;
-decodeAndPublish(result.data, result.totalMs);
+          if (result.kind === 'blazepose') {
+            decodeAndPublishBlaze(result.poses, result.totalMs);
+          } else {
+            decodeAndPublish(result.data, result.totalMs);
+          }
           skipCountdown = INFER_FRAME_SKIP;
           if (sourceMode === 'image') {
             imageShotPending = false;
@@ -1006,17 +1205,27 @@ decodeAndPublish(result.data, result.totalMs);
       if (CFG.idealFrameRate == null) CFG.idealFrameRate = 30;
       if (!CFG.profileId) CFG.profileId = 'ultralite';
 
-      // 0) Proprietary pipeline module (non-fatal when unavailable).
-      await initPipeline();
+      // 0) Proprietary pipeline module (MoveNet-only; skip for BlazePose).
+      if (!IS_BLAZEPOSE) {
+        await initPipeline();
+      } else {
+        post({
+          type: 'diag',
+          message:
+            'pose-pipeline: skipped (blazepose uses CDN pose-detection). ' +
+            'This offline SDK still ships unused bundled MoveNet — prefer ' +
+            '@pose-tracker/react-native-pose-estimation-light'
+        });
+      }
 
-      // 1) Bench MoveNet WITHOUT the camera — estimate FPS, pick capture tier.
+      // 1) Bench model WITHOUT the camera — estimate FPS, pick capture tier.
       post({
         type: 'initialization',
         step: 'loading_pose_model',
-        message: 'loading pose model',
+        message: IS_BLAZEPOSE ? 'loading BlazePose' : 'loading pose model',
         ready: false
       });
-      setHud('loading MoveNet (webgl)…');
+      setHud(IS_BLAZEPOSE ? 'loading BlazePose (webgl)…' : 'loading MoveNet (webgl)…');
       var best = await pickFastestBackend();
 
       var estFps = best.med != null && best.med > 0 ? 1000 / best.med : null;

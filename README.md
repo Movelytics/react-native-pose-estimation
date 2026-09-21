@@ -25,7 +25,7 @@ endpoint.
 | Capability | Detail |
 |------------|--------|
 | **Platforms** | iOS + Android, bare RN and Expo / Expo Go |
-| **Model** | MoveNet SinglePose Lightning (17 COCO keypoints), bundled — no model download |
+| **Model** | MoveNet SinglePose Lightning (17 COCO keypoints), bundled — no model download. Opt-in `model: 'blazepose'` loads BlazePose from CDN (unused MoveNet still in the package — prefer light). |
 | **Free tier** | Pose estimation + keypoints **without an API key**, offline |
 | **Paid tier** | Remote movement engine: squat / push-up / jumps, `counter.form_score`, angles… |
 | **UX** | Branded loading screen, PoseTracker skeleton overlay, plan-gated watermark |
@@ -164,8 +164,13 @@ Yes. Same WebView MoveNet Lightning path on both; adaptive capture quality.
 Yes (WebView peer). Apple Vision backend is optional and not available in Expo Go.
 
 **BlazePose / MediaPipe?**  
-Not in the **offline** SDK (bundled MoveNet Lightning only). Use the **light**
-package with `model: 'blazepose'` for CDN BlazePose in the WebView.
+Pass `model: 'blazepose'` on `PoseTrackerProvider` options. Loads
+`@tensorflow-models/pose-detection` from jsDelivr in the WebView (lite /
+TF.js, COCO-17). **Requires network.** This offline package still ships
+bundled MoveNet which is unused in that mode and inflates the app — Metro
+logs a warning. Prefer
+[`@pose-tracker/react-native-pose-estimation-light`](https://www.npmjs.com/package/@pose-tracker/react-native-pose-estimation-light)
+if you do not need offline MoveNet. Native MediaPipe is not in this SDK.
 
 **Who sees the “powered by PoseTracker” watermark?**  
 Keyless and free plans. Hidden for paid plans (developer / company / enterprise…).

@@ -32,6 +32,7 @@ When you edit **one** SDK:
 - `poseHtml` boot UI / CSS / loading copy
 - Watermark / free-tier chrome
 - Camera permission behavior and `docs/PERMISSIONS.md` (shared docs)
+- Host WebView GPU flags: `docs/HOST_WEBVIEW_PERF.md`
 - `WebViewPoseView` props and provider options that are product API
   (including `source` / `sourceUri` / `sourceBase64` / `sourceMime` — see [`MEDIA_SOURCES.md`](./MEDIA_SOURCES.md))
 - Client / provider public TypeScript API (where both expose it)
@@ -47,14 +48,23 @@ When you edit **one** SDK:
 
 ## Usually light-only
 
-- CDN base URLs, `tfjsVersion`, `modelUrl` resolution / model catalog
+- CDN base URLs, `tfjsVersion`, `modelUrl` resolution / model catalog (MoveNet)
 - `onlineRuntime` thin page runtime wiring
 - Network-required boot path and light pack-size claims
 - Light-only demo (`testapp-light/`) unless the change is a shared demo pattern
 
+## BlazePose on offline (explicit exception)
+
+User-requested: `options.model = 'blazepose'` on the **offline** package loads
+CDN `@tensorflow-models/pose-detection` (same detector as light: TF.js lite,
+256 letterbox, Android skip 2) while **MoveNet stays bundled**. Always emit
+`BLAZEPOSE_ON_OFFLINE_SDK_WARNING` (Metro + `onDiagnostic`) so hosts know
+this package still inflates the app with unused MoveNet. Do **not** switch
+offline MoveNet to CDN as a side effect.
+
 ## Divergent by design — do not “unify” casually
 
-Offline = assets in npm. Light = fetch TF.js + model at boot. Keep those delivery paths separate unless the user explicitly requests a redesign.
+Offline = assets in npm (MoveNet). Light = fetch TF.js + model at boot. Keep those delivery paths separate unless the user explicitly requests a redesign.
 
 ## Checklist (before finishing a shared change)
 

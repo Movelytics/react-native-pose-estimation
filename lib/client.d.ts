@@ -39,6 +39,7 @@ import { type QualityState } from './quality/AdaptiveQualityController';
 import { type CapturePriority, type QualityChoice, type QualityProfile } from './quality/profiles';
 import { type ClassicMessageListener } from './events/classicMessage';
 import { type PoseTrackerFeatures, type ResolvedFeatures } from './types/features';
+import { type PoseModelAlias } from './models/poseModels';
 /**
  * Inference backend selection:
  * - 'auto' (default) / 'webview': MoveNet SinglePose Lightning (17 keypoints,
@@ -60,6 +61,17 @@ export interface PoseTrackerClientOptions extends ConfigureOptions {
     fileStore?: FileStore | null;
     /** Injectable for tests. */
     usageTracker?: UsageTracker;
+    /**
+     * Docs API `model` query parity (`movenet` default, `blazepose`).
+     *
+     * Default **MoveNet** is bundled and fully offline. `blazepose` loads
+     * `@tensorflow-models/pose-detection` from CDN in the WebView (same as
+     * the light SDK) — **requires network**, and this package still ships
+     * unused MoveNet weights. Prefer
+     * `@pose-tracker/react-native-pose-estimation-light` if you do not need
+     * offline MoveNet. Do not pass `{ features: { blazepose: true } }`.
+     */
+    model?: PoseModelAlias;
     /**
      * Camera / preprocess quality tier. Default `AdaptiveChoice` — picks a
      * profile from device capability, crash-loop guard, and live FPS.
@@ -233,7 +245,8 @@ export declare class PoseTrackerClient {
     /**
      * Pose runtime shipped in the package (TF.js + MoveNet + page runtime).
      * Synchronous under the hood; Promise for a stable async API used by
-     * {@link WebViewPoseView}. No network, no download.
+     * {@link WebViewPoseView}. MoveNet uses no network. `model: 'blazepose'`
+     * still injects bundled TF.js but the detector + weights load from CDN.
      */
     getRuntimeParts(): Promise<PoseRuntimeParts>;
     /**
@@ -298,8 +311,9 @@ export declare class PoseTrackerClient {
     private resolveManifest;
     /**
      * WebView parity — the load-time gating of `TrackingAppV3`:
-     * - `blazepose` / `poseEngine` / other WebView-only keys → clear error
-     *   (this SDK ships MoveNet Lightning only);
+     * - `blazepose` / `poseEngine` / other WebView-only keys **as features
+     *   flags** → clear error (`options.model = 'blazepose'` is the supported
+     *   BlazePose path);
      * - developer features requested WITHOUT an API key → the front's exact
      *   "Invalid params… token=YOUR API_KEY…" message;
      * - plan `free` + angles/recommendations/progression → the front's exact

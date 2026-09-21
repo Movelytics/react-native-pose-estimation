@@ -5,12 +5,16 @@
  * page runtime) from {@link getBundledRuntimeParts} into a single HTML
  * string (`source={{ html }}`). Same injection path as before — camera,
  * adaptive quality, postMessage events unchanged.
+ *
+ * BlazePose (`parts.modelKind === 'blazepose'`): bundled TF.js stays inline;
+ * `@tensorflow-models/pose-detection` is loaded from CDN. MoveNet graph
+ * artifacts are omitted from the HTML (they remain in the npm package).
  */
 import type { CapturePriority } from '../../quality/profiles';
 import type { PoseRuntimeParts } from '../../runtime/RuntimeCache';
 import type { SkeletonDefinition } from '../../types/skeleton';
 /** Bumped on every assembler-path change — appears in WebView diag logs. */
-export declare const POSE_HTML_BUILD = "20260812-mediaSources";
+export declare const POSE_HTML_BUILD = "20260921-offlineBlazeposeCdn";
 /** Default boot overlay copy (WebView `loading_message` parity). */
 export declare const DEFAULT_LOADING_TEXT = "AI Loading";
 export interface PoseHtmlOptions {
@@ -19,8 +23,8 @@ export interface PoseHtmlOptions {
     minScore?: number;
     /**
      * getUserMedia resolution hint. Defaults follow the adaptive quality
-     * profile (often UltraLite on Android, Pro/Prime on iOS). Inference always
-     * letterboxes down to 192×192 regardless.
+     * profile (often UltraLite on Android, Pro/Prime on iOS). Inference
+     * letterboxes to 192×192 (MoveNet) or 256×256 (BlazePose).
      */
     idealWidth?: number;
     idealHeight?: number;

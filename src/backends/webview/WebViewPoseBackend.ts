@@ -4,8 +4,9 @@
  * Runs MoveNet SinglePose Lightning (17 keypoints, 192×192) inside a real
  * browser WebGL context (Chromium ANGLE on Android, WKWebView on iOS) — the
  * same approach the PoseTracker WebView product uses in production, and the
- * only one real-time across the whole Android park in Expo Go. Fully
- * offline: TF.js and the model ship inside the npm package (poseHtml.ts).
+ * only one real-time across the whole Android park in Expo Go. MoveNet is
+ * fully offline (TF.js + model in the npm package). `model: 'blazepose'`
+ * reuses bundled TF.js and loads pose-detection from CDN.
  *
  * The WebView owns the camera (`getUserMedia`). Frames are NOT pushed from
  * React Native — `estimatePose()` returns the latest pose posted by the page.

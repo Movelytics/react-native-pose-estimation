@@ -5,11 +5,16 @@
  * page runtime) from {@link getBundledRuntimeParts} into a single HTML
  * string (`source={{ html }}`). Same injection path as before — camera,
  * adaptive quality, postMessage events unchanged.
+ *
+ * BlazePose (`parts.modelKind === 'blazepose'`): bundled TF.js stays inline;
+ * `@tensorflow-models/pose-detection` is loaded from CDN. MoveNet graph
+ * artifacts are omitted from the HTML (they remain in the npm package).
  */
 
 import { Platform } from 'react-native';
 import {
   ANDROID_INFER_FRAME_SKIP,
+  ANDROID_INFER_FRAME_SKIP_BLAZEPOSE,
   ANDROID_PERF_DEBUG,
   ANDROID_PREPROCESS_PATH,
   ANDROID_SOFT_CAP_PROFILE,
@@ -21,7 +26,7 @@ import type { SkeletonDefinition } from '../../types/skeleton';
 import { POSETRACKER_LOGO_DATA_URL } from './brandAssets';
 
 /** Bumped on every assembler-path change — appears in WebView diag logs. */
-export const POSE_HTML_BUILD = '20260812-mediaSources';
+export const POSE_HTML_BUILD = '20260921-offlineBlazeposeCdn';
 
 /** Default boot overlay copy (WebView `loading_message` parity). */
 export const DEFAULT_LOADING_TEXT = 'AI Loading';
@@ -32,8 +37,8 @@ export interface PoseHtmlOptions {
   minScore?: number;
   /**
    * getUserMedia resolution hint. Defaults follow the adaptive quality
-   * profile (often UltraLite on Android, Pro/Prime on iOS). Inference always
-   * letterboxes down to 192×192 regardless.
+   * profile (often UltraLite on Android, Pro/Prime on iOS). Inference
+   * letterboxes to 192×192 (MoveNet) or 256×256 (BlazePose).
    */
   idealWidth?: number;
   idealHeight?: number;
@@ -177,6 +182,10 @@ function escapeScript(js: string): string {
   return js.replace(/<\/script/gi, '<\\/script');
 }
 
+function escapeAttr(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
 /**
  * Assemble the pose page from the downloaded runtime parts. Pure assembly:
  * no pose logic lives here.
@@ -195,6 +204,9 @@ export function buildPoseHtml(parts: PoseRuntimeParts, options?: PoseHtmlOptions
   // hosts pass false for paid / enterprise via WebViewPoseView.
   const watermarkOn = coldStart === 'full' && (options?.showWatermark ?? true);
   const debugHud = !!options?.debugHud;
+  const isBlazePose = parts.modelKind === 'blazepose' || parts.modelId === 'blazepose';
+  const modelId = parts.modelId ?? (isBlazePose ? 'blazepose' : 'movenet-singlepose-lightning');
+  const modelKind = parts.modelKind ?? (isBlazePose ? 'blazepose' : 'movenet-graph');
   const config = JSON.stringify({
     facingMode: options?.facingMode ?? 'user',
     minScore: options?.minScore ?? 0.25,
@@ -220,18 +232,29 @@ export function buildPoseHtml(parts: PoseRuntimeParts, options?: PoseHtmlOptions
     captureConstraintMode: CAPTURE_CONSTRAINT_MODE,
     capturePriority,
     platform: Platform.OS,
+    modelId,
+    modelKind,
     /**
      * Android-only knobs. iOS always gets inert defaults so behaviour stays
      * identical to the pre-experiment path. Soft-cap is off when the host
      * opts into capturePriority=quality (sharp preview over FPS).
      */
-    inferFrameSkip:
-      isAndroid && ANDROID_INFER_FRAME_SKIP > 0 ? ANDROID_INFER_FRAME_SKIP : 0,
+    inferFrameSkip: isAndroid
+      ? (isBlazePose ? ANDROID_INFER_FRAME_SKIP_BLAZEPOSE : ANDROID_INFER_FRAME_SKIP)
+      : 0,
     preprocessPath: isAndroid ? ANDROID_PREPROCESS_PATH : 'imagebitmap',
     softCapProfile:
       isAndroid && !preferQuality ? ANDROID_SOFT_CAP_PROFILE : null,
     perfDebug: isAndroid && ANDROID_PERF_DEBUG,
   });
+
+  const poseDetectionScript = parts.poseDetectionScriptUrl
+    ? `<script src="${escapeAttr(parts.poseDetectionScriptUrl)}"></script>`
+    : '';
+
+  const modelJson = isBlazePose ? null : parts.modelJson;
+  const weightsB64 = isBlazePose ? null : parts.weightsB64;
+  const pipelineWasmB64 = isBlazePose ? null : parts.pipelineWasmB64;
 
   return [
     '<!DOCTYPE html><html><head><meta charset="utf-8" />',
@@ -258,12 +281,15 @@ export function buildPoseHtml(parts: PoseRuntimeParts, options?: PoseHtmlOptions
     '</div>',
     '</div>',
     '<script>', escapeScript(parts.tfjsJs), '</script>',
+    poseDetectionScript,
     '<script>window.__PT_BUILD=', JSON.stringify(`${POSE_HTML_BUILD}/${parts.version}`),
     ';window.__PT_CONFIG=', config,
-    ';window.__PT_MODEL_JSON=', JSON.stringify(parts.modelJson),
-    ';window.__PT_WEIGHTS_B64=', JSON.stringify(parts.weightsB64),
+    ';window.__PT_MODEL_ID=', JSON.stringify(modelId),
+    ';window.__PT_MODEL_KIND=', JSON.stringify(modelKind),
+    ';window.__PT_MODEL_JSON=', JSON.stringify(modelJson),
+    ';window.__PT_WEIGHTS_B64=', JSON.stringify(weightsB64),
     ';window.__PT_WASM_B64=', JSON.stringify(parts.tfjsWasmB64),
-    ';window.__PT_PIPELINE_WASM_B64=', JSON.stringify(parts.pipelineWasmB64),
+    ';window.__PT_PIPELINE_WASM_B64=', JSON.stringify(pipelineWasmB64),
     ';</script>',
     '<script>', escapeScript(parts.runtimeJs), '</script>',
     '</body></html>',

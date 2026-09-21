@@ -11,8 +11,8 @@
  * - `keypoints` DURING an exercise session requires a paid plan too
  *   (free may stream keypoints only in pose-only mode, i.e. no exercise).
  * - `blazepose` / `poseEngine` / `mediapipeModel` / `poseBackend` /
- *   `runInWorker` are NOT part of this SDK (MoveNet Lightning only) and are
- *   rejected with a clear error.
+ *   `runInWorker` are NOT feature flags here — select BlazePose with
+ *   `options.model = 'blazepose'` instead of `{ features: { blazepose: true } }`.
  */
 
 import type { MinGrade } from './events';
@@ -75,12 +75,12 @@ const KNOWN_FEATURE_KEYS = new Set<string>([
 ]);
 
 /**
- * WebView params that this SDK deliberately does NOT ship (one SDK, one
- * model: MoveNet Lightning). Passing them (possible from untyped JS hosts)
- * produces a clear `feature_not_supported` error.
+ * WebView params that are NOT feature flags in this SDK.
+ * Note: `options.model = 'blazepose'` is supported (CDN pose-detection);
+ * passing `{ blazepose: true }` inside `features` is rejected.
  */
 const UNSUPPORTED_FEATURE_HINTS: Record<string, string> = {
-  blazepose: 'BlazePose',
+  blazepose: 'BlazePose as a features flag (use options.model = "blazepose" instead)',
   poseEngine: 'pose engine selection (MediaPipe/PoseLandmarker)',
   mediapipeModel: 'MediaPipe model selection',
   poseBackend: 'pose backend selection',
@@ -108,9 +108,8 @@ export const COMBINED_REFERENCE_EXERCISE_MESSAGE =
 export function featureNotSupportedMessage(key: string): string {
   const hint = UNSUPPORTED_FEATURE_HINTS[key] ?? `'${key}'`;
   return (
-    `The '${key}' option (${hint}) is not available in this SDK. ` +
-    'This SDK ships MoveNet Lightning only — pose engine and model cannot be changed. ' +
-    'Remove the option, or use the PoseTracker WebView product if you need it. ' +
+    `The '${key}' option (${hint}) is not available as a features flag. ` +
+    'Remove the option, or use options.model = "blazepose" for CDN BlazePose. ' +
     '(visit: https://posetracker.gitbook.io/posetracker-api/tracking-endpoint)'
   );
 }

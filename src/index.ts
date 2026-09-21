@@ -7,8 +7,11 @@
  *
  * Runtime model:
  * - Default (both platforms, incl. Expo Go): MoveNet SinglePose Lightning
- *   (17 keypoints, 192×192) inside a Chromium/WKWebView — TF.js WebGL.
- *   Mount {@link WebViewPoseView}.
+ *   (17 keypoints, 192×192) inside a Chromium/WKWebView — TF.js WebGL,
+ *   fully offline. Mount {@link WebViewPoseView}.
+ * - Opt-in `options.model = 'blazepose'`: same WebView + bundled TF.js, but
+ *   BlazePose lite loads from CDN (`@tensorflow-models/pose-detection`).
+ *   Prefer the light SDK if you do not need bundled MoveNet.
  * - Opt-in (`preferredBackend: 'vision'`, iOS native builds): Apple Vision
  *   `VNDetectHumanBodyPoseRequest` via {@link PoseCameraView}.
  */
@@ -35,6 +38,19 @@ export {
   getBundledRuntimeParts,
   getBundledRuntimeVersion,
 } from './backends/webview/bundledRuntime';
+export type { GetBundledRuntimeOptions } from './backends/webview/bundledRuntime';
+export {
+  BLAZEPOSE_ON_OFFLINE_SDK_WARNING,
+  ONLINE_POSE_DETECTION_VERSION,
+  defaultPoseDetectionCdnUrl,
+  resolvePoseModel,
+} from './models/poseModels';
+export type {
+  PoseModelAlias,
+  PoseModelKind,
+  ResolvePoseModelOptions,
+  ResolvedPoseModel,
+} from './models/poseModels';
 
 // Orchestrator + React layer
 export { PoseTrackerClient } from './client';
@@ -188,6 +204,7 @@ export {
 } from './quality/profiles';
 export {
   ANDROID_INFER_FRAME_SKIP,
+  ANDROID_INFER_FRAME_SKIP_BLAZEPOSE,
   ANDROID_MIN_TARGET_FPS,
   ANDROID_PERF_DEBUG,
   ANDROID_PREPROCESS_PATH,

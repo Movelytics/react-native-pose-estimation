@@ -10,6 +10,7 @@ Android may fail silently; Expo Go needs the plugin/`infoPlist` entries.
 
 Related: [`PRELOAD.md`](PRELOAD.md) — use `preload()` / `coldStart: 'basic'`
 on lobby screens so you never prompt before the user opens the camera.
+WebView GPU / host-app flags: [`HOST_WEBVIEW_PERF.md`](HOST_WEBVIEW_PERF.md).
 
 ---
 

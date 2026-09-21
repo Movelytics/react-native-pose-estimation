@@ -41,7 +41,8 @@ event streams) require **internet**:
 | `minGrade` | `options.features.minGrade` | — | `'A'…'D'`: only count reps at/above this grade (grades themselves are A–F) |
 | `width` / `height` | RN layout (`style`) | — | Handled by the host layout |
 | `isAndroid` | automatic (`Platform.OS`) | — | — |
-| `blazepose`, `poseEngine`, `mediapipeModel`, `poseBackend`, `runInWorker` | **not available** | — | This SDK ships MoveNet Lightning only → `feature_not_supported` error |
+| `blazepose` (query) | **offline + light:** `options.model = 'blazepose'` | — | CDN `@tensorflow-models/pose-detection` (TF.js lite, COCO-17). Offline package still ships unused bundled MoveNet → prefer light. `{ features: { blazepose: true } }` → `feature_not_supported`. Iframe: `?blazepose=true` plus optional `blazeposeRuntime=tfjs`. Host flags: [`HOST_WEBVIEW_PERF.md`](./HOST_WEBVIEW_PERF.md) |
+| `poseEngine`, `mediapipeModel`, `poseBackend`, `runInWorker`, `blazeposeRuntime` | **not available** as SDK flags | — | Rejected with `feature_not_supported`. Native MediaPipe is not this TF.js WebView SDK. |
 | `reference` / `reference_movement` | Phase 2 (planned) | — | Combined with an exercise → same "cannot combine" front error |
 
 ```tsx
@@ -61,6 +62,24 @@ event streams) require **internet**:
   <WebViewPoseView drawSkeleton skeletonUuid="YOUR_SKELETON_API_UUID" />
 </PoseTrackerProvider>
 ```
+
+### BlazePose (`options.model`)
+
+Default remains **bundled MoveNet** (offline). To use PoseTracker BlazePose
+lite (same COCO-17 events as MoveNet):
+
+```tsx
+<PoseTrackerProvider options={{ model: 'blazepose' }}>
+  <WebViewPoseView />
+</PoseTrackerProvider>
+```
+
+BlazePose loads `@tensorflow-models/pose-detection` from jsDelivr (needs
+network), letterboxes at 256², Android skip 2. On the **offline** package
+this still ships unused MoveNet (~10 MB packed) — Metro logs a warning and
+you should switch to
+[`@pose-tracker/react-native-pose-estimation-light`](../packages/pose-estimation-react-native-light/README.md)
+unless you also need offline MoveNet. Do **not** pass `{ features: { blazepose: true } }`.
 
 `movement.custom_skeleton` (flexibility pose id string) is **not** the overlay
 theme — that field is unrelated to drawing. Overlay customs are Strapi
@@ -128,7 +147,7 @@ relevant) use the **exact front strings**:
 | Unknown exercise id | `invalid_exercise` | `Exercise '<id>' is not available in V3 engine` |
 | `jump_analysis` without `userHeightCm` | `jump_analysis_missing_height` | `User height (userHeightCm) must be provided for jump_analysis exercise` |
 | `free` + angles/recommendations/progression (at configure), or + keypoints with an exercise (at `startExercise`) | `free_plan_feature_blocked` | `You cannot use developer features. (visit: https://posetracker.gitbook.io/posetracker-api/tracking-endpoint)` |
-| `blazepose` / `poseEngine` / … passed by an untyped host | `feature_not_supported` | `The 'blazepose' option (BlazePose) is not available in this SDK. …` |
+| `blazepose` / `poseEngine` / … passed as `features` flags | `feature_not_supported` | Use `options.model = 'blazepose'` instead of `{ features: { blazepose: true } }`. |
 | Offline with an API key at camera start | `offline_metered` | usage cannot be counted — reconnect to start a metered session |
 | Quota exhausted | `quota_exceeded` | from the API |
 | Token revoked | `invalid_token` | sealed engine + session caches purged → keypoints-only |

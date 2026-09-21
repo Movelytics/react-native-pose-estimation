@@ -55,6 +55,15 @@ export declare const ENABLE_MALI_HARD_CAP = false;
  */
 export declare const ANDROID_INFER_FRAME_SKIP = 1;
 /**
+ * Android-only extra rAF ticks to skip between **BlazePose** inferences.
+ * MoveNet keeps {@link ANDROID_INFER_FRAME_SKIP}. Preview is unchanged.
+ *
+ * - `2` — infer on every 3rd ready tick (heavier TF.js BlazePose lite)
+ *
+ * Applied when `options.model = 'blazepose'` (CDN pose-detection).
+ */
+export declare const ANDROID_INFER_FRAME_SKIP_BLAZEPOSE = 2;
+/**
  * Android-only preprocess path. iOS always uses `imagebitmap` (unchanged).
  */
 export declare const ANDROID_PREPROCESS_PATH: AndroidPreprocessPath;

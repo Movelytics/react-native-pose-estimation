@@ -3,8 +3,9 @@
  * default runtime on BOTH platforms.
  *
  * Renders a Chromium/WKWebView that owns getUserMedia + MoveNet Lightning
- * (TF.js WebGL, fully offline — runtime and model are bundled in the
- * package) and draws the skeleton inside the page.
+ * (TF.js WebGL, fully offline for **MoveNet** — runtime and model are bundled
+ * in the package). `model: 'blazepose'` loads pose-detection from CDN.
+ * Draws the skeleton inside the page.
  *
  * Camera capture resolution is driven by {@link AdaptiveQualityController}
  * (AdaptiveChoice + crash-loop guard + live FPS downgrades).
@@ -443,6 +444,7 @@ export function WebViewPoseView(props: WebViewPoseViewProps): React.ReactElement
         style={StyleSheet.absoluteFill}
         originWhitelist={['*']}
         source={{ html, baseUrl: 'https://localhost/' }}
+        mixedContentMode="always"
         allowFileAccess
         mediaPlaybackRequiresUserAction={false}
         mediaCapturePermissionGrantType="grant"

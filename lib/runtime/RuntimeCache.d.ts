@@ -35,6 +35,14 @@ export interface PoseRuntimeParts {
     pipelineWasmB64: string | null;
     /** Page runtime (camera, presets, inference loop, events). */
     runtimeJs: string;
+    /**
+     * Optional model tag injected into the WebView. Default (omitted) is
+     * bundled MoveNet. `blazepose` loads pose-detection from CDN.
+     */
+    modelId?: string;
+    modelKind?: 'movenet-graph' | 'blazepose';
+    /** CDN URL for `@tensorflow-models/pose-detection` UMD (BlazePose only). */
+    poseDetectionScriptUrl?: string | null;
 }
 export interface RuntimeCacheProgress {
     part: string;

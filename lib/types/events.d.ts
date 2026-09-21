@@ -65,8 +65,9 @@ export interface ErrorEvent {
      */
      | 'free_plan_feature_blocked'
     /**
-     * A WebView-only option was requested (blazepose, poseEngine,
-     * mediapipeModel, …): this SDK ships MoveNet Lightning only.
+     * A WebView-only option was requested as a **features flag**
+     * (`features.blazepose`, poseEngine, mediapipeModel, …).
+     * Select BlazePose with `options.model = 'blazepose'` instead.
      */
      | 'feature_not_supported'
     /** Unknown exercise id (WebView parity: `invalid_exercise`). */

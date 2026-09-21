@@ -15,7 +15,7 @@
 - Peer dependency: react-native-webview
 - Camera permissions: required in the host app (not declared by the SDK)
 - Watermark: shown for keyless/free; hidden for paid plans
-- Not included: BlazePose, MediaPipe, multi-person models (separate SDKs later)
+- Not included: native MediaPipe / PoseLandmarker. BlazePose TF.js lite via `options.model = 'blazepose'` (CDN; on the offline package unused MoveNet still ships — prefer light)
 
 ## npm + GitHub (locked)
 

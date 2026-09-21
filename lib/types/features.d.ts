@@ -11,8 +11,8 @@
  * - `keypoints` DURING an exercise session requires a paid plan too
  *   (free may stream keypoints only in pose-only mode, i.e. no exercise).
  * - `blazepose` / `poseEngine` / `mediapipeModel` / `poseBackend` /
- *   `runInWorker` are NOT part of this SDK (MoveNet Lightning only) and are
- *   rejected with a clear error.
+ *   `runInWorker` are NOT feature flags here — select BlazePose with
+ *   `options.model = 'blazepose'` instead of `{ features: { blazepose: true } }`.
  */
 import type { MinGrade } from './events';
 export interface PoseTrackerFeatures {

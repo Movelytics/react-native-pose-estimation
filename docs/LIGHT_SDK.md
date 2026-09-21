@@ -78,6 +78,11 @@ relative neighbors (`group1-shard1of2.bin`, etc.).
   MoveNet (extra BlazePose joints dropped). Heavier than MoveNet — prefer
   MoveNet on mid-range Android.
 
+The **offline** package now accepts the same `model: 'blazepose'` flag: it
+keeps bundled TF.js + MoveNet in the npm tarball, injects pose-detection from
+CDN, and **warns** in Metro that the host should switch to light if they do
+not need offline MoveNet. MoveNet on offline stays bundled (not CDN).
+
 ## Where the fetch happens (light)
 
 1. `PoseTrackerClient.getRuntimeParts()` resolves CDN + `modelUrl` / BlazePose scripts.
@@ -119,15 +124,19 @@ TF.js are delivered. When editing **either** package:
 - **Default:** if the change is shared UX / API / bugfix → apply it to **both**, or **ask** which package(s) before coding.
 - **Usually both:** `poseHtml` boot UI, watermark, camera permission behavior, `WebViewPoseView` / client public API, event shapes, adaptive quality, shared `pose-runtime.js` logic.
 - **Usually offline-only:** `bundledRuntime` / assets, pack size from bundling.
-- **Usually light-only:** CDN / `modelUrl` / `model: 'blazepose'`, `onlineRuntime`, network-at-boot, light pack size.
+- **Usually light-only:** CDN TF.js / `modelUrl` / `onlineRuntime`, network-at-boot MoveNet, light pack size.
+- **BlazePose exception (explicit):** both packages support `model: 'blazepose'`
+  via CDN pose-detection. Offline does **not** bundle BlazePose and still
+  ships unused MoveNet — warn the host to prefer light. Do not copy light
+  CDN loading onto the offline **MoveNet** path.
 
 Full checklist (monorepo): [`DUAL_SDK_CHANGES.md`](./DUAL_SDK_CHANGES.md) · package READMEs above · Cursor rule `dual-rn-pose-sdks`.
 
 ## Out of scope (voluntary)
 
 - Local FS cache of the light model (fully online by design)
-- Unifying delivery (do not turn light into a bundle or offline into CDN-only unless explicitly requested)
-- BlazePose on the **offline** RN package (bundled MoveNet only — use light + `model: 'blazepose'`)
+- Unifying delivery (do not turn light into a bundle or offline MoveNet into CDN-only unless explicitly requested)
+- Bundling BlazePose weights inside the offline npm package (CDN only, same as light)
 
 ## Confirm
 

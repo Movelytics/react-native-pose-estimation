@@ -9,6 +9,9 @@ existante (MoveNet TF.js + backend Strapi + configs de mouvements serveur).
 > AdaptiveChoice, auto-downgrade FPS, alertes développeur) : voir
 > [`ADAPTIVE_QUALITY.md`](./ADAPTIVE_QUALITY.md).
 >
+> **Flags WebView côté app hôte** (accélération GPU, pas de layer software,
+> System WebView) : [`HOST_WEBVIEW_PERF.md`](./HOST_WEBVIEW_PERF.md).
+>
 > **Événements temps réel** (init / keypoints / warning / error — parité
 > WebView PoseTracker `sendDataToNative`) : voir [`EVENTS.md`](./EVENTS.md).
 
