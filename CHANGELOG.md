@@ -8,6 +8,25 @@ Versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.4] — 2026-09-29
+
+### Fixed
+
+- iOS autolinking no longer pulls in `PoseTrackerVision` unless the app installed `react-native-vision-camera`. Store and Expo builds that only use the WebView camera were failing `pod install` with `Unable to find a specification for VisionCamera`.
+
+Shipped on both `@pose-tracker/react-native-pose-estimation` and `@pose-tracker/react-native-pose-estimation-light`.
+
+## [0.3.3] — 2026-09-29
+
+### Added
+
+- `back_flexibility_test` in the V4-only exercise list.
+- `analysis` on counter and rep summaries (peaks, camera, flags, interpretation).
+- `disclaimer` and `method` on the exercise summary when the movement emits a report.
+- Form grade `E`.
+
+Shipped on both `@pose-tracker/react-native-pose-estimation` and `@pose-tracker/react-native-pose-estimation-light`.
+
 ## [0.3.1] — 2026-09-08
 
 ### Changed

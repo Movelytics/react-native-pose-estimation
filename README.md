@@ -39,12 +39,12 @@ use the sibling **Light** SDK (~**206 kB** packed):
 
 - npm: [`@pose-tracker/react-native-pose-estimation-light`](https://www.npmjs.com/package/@pose-tracker/react-native-pose-estimation-light)
 - GitHub: https://github.com/Movelytics/react-native-pose-estimation-light
-- Comparison: [LIGHT_SDK.md](docs/LIGHT_SDK.md)
+- Comparison: [LIGHT_SDK.md](../../docs/LIGHT_SDK.md)
 
 Same free keypoints + paid engine API surface; light fetches the model at boot.
 
 **Agents:** shared UX/API/bugfixes → mirror to light (or ask first). See
-[`DUAL_SDK_CHANGES.md`](docs/DUAL_SDK_CHANGES.md).
+[`DUAL_SDK_CHANGES.md`](../../docs/DUAL_SDK_CHANGES.md).
 
 ## Install
 
@@ -59,10 +59,10 @@ npx expo install react-native-webview expo-camera
 > **GitHub:** https://github.com/Movelytics/react-native-pose-estimation
 
 **Required:** host app must declare camera permissions — see
-[PERMISSIONS.md](docs/PERMISSIONS.md).
+[PERMISSIONS.md](../../docs/PERMISSIONS.md).
 
 **Media inputs (v0.2):** camera (default), uploaded video, still image — host
-picks the file. See [MEDIA_SOURCES.md](docs/MEDIA_SOURCES.md) and
+picks the file. See [MEDIA_SOURCES.md](../../docs/MEDIA_SOURCES.md) and
 https://docs.posetracker.com/media-sources.
 
 ## Quick start (free keypoints, no API key)
@@ -72,7 +72,7 @@ import {
   PoseTrackerProvider,
   WebViewPoseView,
   usePoseTracker,
-} from '@pose-tracker/react-native-pose-estimation';
+} from '@posetracker/pose-estimation-react-native';
 
 function App() {
   return (
@@ -145,11 +145,11 @@ Camera screen: `<WebViewPoseView />` (`coldStart="full"`).
 
 | Doc | Topic |
 |-----|--------|
-| [PERMISSIONS.md](docs/PERMISSIONS.md) | Camera permission setup (required) |
-| [PRELOAD.md](docs/PRELOAD.md) | Preload / warm-up / lifecycle |
-| [FEATURES.md](docs/FEATURES.md) | Plan gating, watermark, loading text |
-| [EVENTS.md](docs/EVENTS.md) | Typed events + classic `onMessage` |
-| GitHub Releases / CHANGELOG | npm / GitHub go-live runbook |
+| [PERMISSIONS.md](../../docs/PERMISSIONS.md) | Camera permission setup (required) |
+| [PRELOAD.md](../../docs/PRELOAD.md) | Preload / warm-up / lifecycle |
+| [FEATURES.md](../../docs/FEATURES.md) | Plan gating, watermark, loading text |
+| [EVENTS.md](../../docs/EVENTS.md) | Typed events + classic `onMessage` |
+| [PUBLISHING.md](../../docs/PUBLISHING.md) | npm / GitHub go-live runbook |
 | [llms.txt](../../llms.txt) | Machine-readable product facts (GEO) |
 
 ## FAQ (GEO-friendly)

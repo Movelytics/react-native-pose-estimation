@@ -111,7 +111,7 @@ export interface AnglesEvent {
  * Letter grade for a 0–100 form score (GitBook / Front BaseExercise):
  * A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, F &lt; 60.
  */
-export type FormGrade = 'A' | 'B' | 'C' | 'D' | 'F';
+export type FormGrade = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
 /** Valid `minGrade` filter values (F is not a valid minGrade config). */
 export type MinGrade = 'A' | 'B' | 'C' | 'D';
 /**
@@ -125,6 +125,30 @@ export interface CounterFormScore {
     average: number;
     grade: FormGrade;
 }
+/**
+ * Per-rep report for a physical test (back flexibility). Present only when the
+ * movement declares `report`. Disclaimer stays in this object, not in `interpretation.text`.
+ */
+export interface MovementAnalysis {
+    opinion?: boolean;
+    method?: string;
+    disclaimer?: string;
+    peaks?: Record<string, number>;
+    camera?: {
+        placement?: string;
+        bias?: number;
+        ratio?: number;
+    };
+    ankle_above_sole?: number;
+    knee_locked?: boolean;
+    leg_straight?: boolean;
+    shank_vertical?: boolean;
+    interpretation?: {
+        tone: 'strong' | 'partial' | 'limited';
+        title: string;
+        text: string;
+    };
+}
 export interface CounterEvent {
     type: 'counter';
     count: number;
@@ -136,6 +160,8 @@ export interface CounterEvent {
     formScore?: CounterFormScore;
     /** Similarity score vs. reference movement for the last rep, when a reference is active. */
     referenceScore?: number;
+    /** Physical-test report: peaks, camera, flags, interpretation, disclaimer. */
+    analysis?: MovementAnalysis;
     timestampMs: number;
 }
 export interface PostureEvent {
@@ -209,6 +235,7 @@ export interface RepSummary {
     formScore: number;
     durationMs: number;
     referenceScore?: number;
+    analysis?: MovementAnalysis;
 }
 export interface ExerciseSummaryEvent {
     type: 'exercise_summary';
@@ -219,6 +246,9 @@ export interface ExerciseSummaryEvent {
     grade: FormGrade;
     history: RepSummary[];
     durationMs: number;
+    /** Set when the movement emits a report. Kept out of interpretation text. */
+    disclaimer?: string;
+    method?: string;
     timestampMs: number;
 }
 export interface VisibleHipsInfo {

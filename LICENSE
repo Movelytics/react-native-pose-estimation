@@ -3,8 +3,8 @@ Copyright (c) 2024–2026 Movelytics SAS. All rights reserved.
 
 PROPRIETARY SOFTWARE LICENSE
 
-This repository and the npm package published under the @pose-tracker scope
-(the "Software") are proprietary to Movelytics SAS ("Licensor").
+This package published under the @pose-tracker scope (the "Software") is
+proprietary to Movelytics SAS ("Licensor").
 
 1. Grant of use
    Subject to a valid PoseTracker account and applicable product terms

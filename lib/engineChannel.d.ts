@@ -8,7 +8,7 @@
  */
 export type EngineChannel = 'v3' | 'v4';
 /** Wellness ids with no V3 FSM. */
-export declare const V4_ONLY_EXERCISE_IDS: readonly ["shoulder_roll", "shoulder_deep_breath", "chair_forward_fold", "chair_side_stretch"];
+export declare const V4_ONLY_EXERCISE_IDS: readonly ["shoulder_roll", "shoulder_deep_breath", "chair_forward_fold", "chair_side_stretch", "back_flexibility_test"];
 /** Existing jump handlers — not V4 JSON. */
 export declare const JUMP_EXERCISE_IDS: readonly ["jump_analysis", "air_time_jump"];
 export declare const PRODUCTION_SQUAT_IDS: readonly ["squat", "face_squat"];
