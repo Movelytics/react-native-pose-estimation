@@ -28,8 +28,9 @@ export interface WebViewPoseViewProps {
      */
     drawSkeleton?: boolean;
     /**
-     * Show a placement guide box (WebView `postureBox` parity) while the
+     * Show the placement zone (iframe `placementOverlay` parity) while the
      * active exercise reports `posture.ready === false`. Default `true`.
+     * Gray masks sit outside the box; the frame is the PoseTracker stroke.
      * Drawn as an RN sibling overlay (reliable on iOS; Android WebView may
      * composite above it — hosts can also render from `onPosture`).
      */

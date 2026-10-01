@@ -76,8 +76,9 @@ export interface WebViewPoseViewProps {
    */
   drawSkeleton?: boolean;
   /**
-   * Show a placement guide box (WebView `postureBox` parity) while the
+   * Show the placement zone (iframe `placementOverlay` parity) while the
    * active exercise reports `posture.ready === false`. Default `true`.
+   * Gray masks sit outside the box; the frame is the PoseTracker stroke.
    * Drawn as an RN sibling overlay (reliable on iOS; Android WebView may
    * composite above it — hosts can also render from `onPosture`).
    */
@@ -471,21 +472,32 @@ export function WebViewPoseView(props: WebViewPoseViewProps): React.ReactElement
         }}
       />
       {showPlacementBox ? (
-        <View
-          pointerEvents="none"
-          style={[
-            styles.placementBox,
-            {
-              top: `${placementPaddingPercent}%`,
-              bottom: `${placementPaddingPercent}%`,
-              left: `${placementPaddingPercent}%`,
-              right: `${placementPaddingPercent}%`,
-            },
-          ]}
-        />
+        <PlacementZone paddingPercent={placementPaddingPercent} />
       ) : null}
       {/* Optional RN overlay (works on iOS; usually hidden under Android WebView surface). */}
       {props.children}
+    </View>
+  );
+}
+
+/** Iframe V4 placement: outside dim `#000` at 0.55, demo frame `#4DD21D`. */
+const PLACEMENT_DIM = 'rgba(0,0,0,0.55)';
+const PLACEMENT_STROKE = '#4DD21D';
+
+function PlacementZone({ paddingPercent }: { paddingPercent: number }) {
+  const pad = `${paddingPercent}%` as `${number}%`;
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <View style={[styles.placementDim, { top: 0, left: 0, right: 0, height: pad }]} />
+      <View style={[styles.placementDim, { bottom: 0, left: 0, right: 0, height: pad }]} />
+      <View style={[styles.placementDim, { top: pad, bottom: pad, left: 0, width: pad }]} />
+      <View style={[styles.placementDim, { top: pad, bottom: pad, right: 0, width: pad }]} />
+      <View
+        style={[
+          styles.placementBox,
+          { top: pad, bottom: pad, left: pad, right: pad },
+        ]}
+      />
     </View>
   );
 }
@@ -494,12 +506,14 @@ const styles = StyleSheet.create({
   fill: { flex: 1, backgroundColor: '#000' },
   center: { alignItems: 'center', justifyContent: 'center', padding: 16 },
   error: { color: '#FE8370', textAlign: 'center', fontSize: 13 },
-  /** Front drawPostureBox stroke `#FE8370`. */
+  placementDim: {
+    position: 'absolute',
+    backgroundColor: PLACEMENT_DIM,
+  },
   placementBox: {
     position: 'absolute',
-    borderWidth: 3,
-    borderColor: '#FE8370',
-    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: PLACEMENT_STROKE,
     backgroundColor: 'transparent',
   },
 });

@@ -8,6 +8,14 @@ Versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.5] — 2026-10-01
+
+### Changed
+
+- Default placement zone matches the iframe: grayed sides and the PoseTracker frame (`#4DD21D`), replacing the Flexifit coral box.
+
+Shipped on both `@pose-tracker/react-native-pose-estimation` and `@pose-tracker/react-native-pose-estimation-light`.
+
 ## [0.3.4] — 2026-09-29
 
 ### Fixed
