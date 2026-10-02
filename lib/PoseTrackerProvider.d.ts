@@ -17,6 +17,7 @@
 import React from 'react';
 import { PoseTrackerClient, type PoseTrackerClientOptions, type StartExerciseOptions } from './client';
 import type { PoseInputFrame } from './backends/PoseBackend';
+import type { ExternalFrame, ExternalFrameResult } from './types/externalFrame';
 import type { ExerciseConfig, SdkManifest } from './types/manifest';
 import type { PreloadOptions } from './types/preload';
 import type { ErrorEvent, PoseTrackerCallbacks, PoseTrackerEventListener, PoseTrackerMode, PoseTrackerStatus } from './types/events';
@@ -72,13 +73,28 @@ export interface PoseTrackerContextValue {
     startExercise: (exerciseId: string, options?: StartExerciseOptions) => void;
     stopExercise: () => void;
     estimatePose: (frame: PoseInputFrame) => Promise<Pose | null>;
-    processFrame: (frame: PoseInputFrame) => Promise<Pose | null>;
+    /**
+     * Pass `{ base64 | uri, width, height, timestampMs }` from your own camera
+     * after {@link warmupExternal}: resolves `{ dropped, pose, events }`.
+     * Any other frame keeps the original pose + engine behaviour.
+     */
+    processFrame: ProcessFrameFn;
+    /**
+     * Opt-in: load the model for frames from your own camera. Mounts a hidden
+     * 1×1 basic WebView (no camera, nothing drawn). Not needed with
+     * `WebViewPoseView`.
+     */
+    warmupExternal: () => Promise<void>;
     addEventListener: (listener: PoseTrackerEventListener) => () => void;
     /**
      * Classic PoseTracker WebView JSON stream (`sendDataToNative` shape).
      * Same as `usePoseTracker({ onMessage })`.
      */
     addMessageListener: (listener: (message: import('./events/classicMessage').ClassicNativeMessage) => void) => () => void;
+}
+export interface ProcessFrameFn {
+    (frame: ExternalFrame): Promise<ExternalFrameResult>;
+    (frame: PoseInputFrame): Promise<Pose | null>;
 }
 export interface PoseTrackerProviderProps {
     /** Optional: without a token the SDK runs in keypoints-only mode. */

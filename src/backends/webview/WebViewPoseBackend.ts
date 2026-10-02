@@ -8,9 +8,10 @@
  * fully offline (TF.js + model in the npm package). `model: 'blazepose'`
  * reuses bundled TF.js and loads pose-detection from CDN.
  *
- * The WebView owns the camera (`getUserMedia`). Frames are NOT pushed from
- * React Native — `estimatePose()` returns the latest pose posted by the page.
- * Mount {@link WebViewPoseView} (or a 1×1 warmer) to attach the runtime.
+ * By default the WebView owns the camera (`getUserMedia`) and
+ * `estimatePose()` returns the latest pose posted by the page. Mount
+ * {@link WebViewPoseView} (or a 1×1 warmer) to attach the runtime.
+ * Opt-in: {@link pushFrame} infers host-provided frames on a basic warmer.
  */
 
 import type { PoseBackend, PoseBackendInitOptions, PoseInputFrame } from '../PoseBackend';
@@ -21,6 +22,7 @@ import type {
   DiagnosticListener,
 } from '../../types/acceleration';
 import type { PoseTrackerEvent } from '../../types/events';
+import type { ExternalFrame } from '../../types/externalFrame';
 
 export type WebViewPoseMessage =
   | {
@@ -56,7 +58,10 @@ export type WebViewPoseMessage =
       score: number;
       inferenceTimeMs: number;
       timestampMs: number;
+      /** Set when the pose answers a pushed external frame. */
+      frameId?: number;
     }
+  | { type: 'frame_result'; id: number; dropped: boolean; error?: string }
   | {
       type: 'stats';
       fps: number;
@@ -156,6 +161,15 @@ type ReadyResolver = {
   reject: (err: Error) => void;
 };
 
+type PendingFrame = {
+  pose: Pose | null;
+  resolve: (result: { dropped: boolean; pose: Pose | null }) => void;
+  reject: (err: Error) => void;
+  timer: ReturnType<typeof setTimeout>;
+};
+
+const PUSH_FRAME_TIMEOUT_MS = 10_000;
+
 export class WebViewPoseBackend implements PoseBackend {
   readonly name = 'webview-movenet';
 
@@ -166,6 +180,9 @@ export class WebViewPoseBackend implements PoseBackend {
   /** True after the page successfully opened getUserMedia. */
   private cameraOpened = false;
   private openCameraHandler: (() => void) | undefined;
+  private pushFrameHandler: ((payload: string) => void) | undefined;
+  private frameSeq = 0;
+  private readonly pendingFrames = new Map<number, PendingFrame>();
   private lastPose: Pose | null = null;
   private inferenceTimesMs: number[] = [];
   private medianInferenceMs: number | null = null;
@@ -205,7 +222,22 @@ export class WebViewPoseBackend implements PoseBackend {
       this.warm = false;
       this.cameraOpened = false;
       this.openCameraHandler = undefined;
+      this.pushFrameHandler = undefined;
+      this.rejectPendingFrames('WebView detached while a frame was in flight.');
     }
+  }
+
+  isAttached(): boolean {
+    return this.attached;
+  }
+
+  /** Model warm in the attached page (basic or full cold-start). */
+  isWarm(): boolean {
+    return this.warm;
+  }
+
+  getLastPose(): Pose | null {
+    return this.lastPose;
   }
 
   setOnPose(handler: ((pose: Pose, inferenceTimeMs: number) => void) | undefined): void {
@@ -399,8 +431,71 @@ export class WebViewPoseBackend implements PoseBackend {
         timestampMs: msg.timestampMs,
       };
       this.lastPose = pose;
+      if (msg.frameId != null) {
+        const pending = this.pendingFrames.get(msg.frameId);
+        if (pending) pending.pose = pose;
+      }
       this.onPose?.(pose, msg.inferenceTimeMs);
+      return;
     }
+
+    if (msg.type === 'frame_result') {
+      const pending = this.pendingFrames.get(msg.id);
+      if (!pending) return;
+      this.pendingFrames.delete(msg.id);
+      clearTimeout(pending.timer);
+      if (msg.error) {
+        pending.reject(new Error(`processFrame: ${msg.error}`));
+      } else {
+        pending.resolve({ dropped: msg.dropped === true, pose: pending.pose });
+      }
+    }
+  }
+
+  /** Host view injects `__PT_PUSH_FRAME` with the JSON payload. */
+  setPushFrameHandler(handler: ((payload: string) => void) | undefined): void {
+    this.pushFrameHandler = handler;
+  }
+
+  /**
+   * Infer one host-provided frame in the attached page. Resolves after the
+   * page posted the pose (already forwarded to `onPose`, hence the engine).
+   */
+  pushFrame(frame: ExternalFrame): Promise<{ dropped: boolean; pose: Pose | null }> {
+    const handler = this.pushFrameHandler;
+    if (!handler) {
+      return Promise.reject(
+        new Error('processFrame: no WebViewPoseView is attached. Call warmupExternal() first.'),
+      );
+    }
+    const id = ++this.frameSeq;
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pendingFrames.delete(id);
+        reject(new Error('processFrame: timed out waiting for the pose runtime.'));
+      }, PUSH_FRAME_TIMEOUT_MS);
+      this.pendingFrames.set(id, { pose: null, resolve, reject, timer });
+      handler(
+        JSON.stringify({
+          id,
+          base64: frame.base64 ?? null,
+          uri: frame.uri ?? null,
+          mime: frame.mime ?? null,
+          width: frame.width,
+          height: frame.height,
+          timestampMs: frame.timestampMs,
+          mirrored: frame.mirrored !== false,
+        }),
+      );
+    });
+  }
+
+  private rejectPendingFrames(message: string): void {
+    for (const pending of this.pendingFrames.values()) {
+      clearTimeout(pending.timer);
+      pending.reject(new Error(`processFrame: ${message}`));
+    }
+    this.pendingFrames.clear();
   }
 
   async init(_options: PoseBackendInitOptions): Promise<void> {
@@ -501,6 +596,8 @@ export class WebViewPoseBackend implements PoseBackend {
     this.cameraOpened = false;
     this.attached = false;
     this.openCameraHandler = undefined;
+    this.pushFrameHandler = undefined;
+    this.rejectPendingFrames('client disposed.');
     this.lastPose = null;
     this.acceleration = 'unknown';
     this.readyWaiters = [];

@@ -38,7 +38,8 @@ When you edit **one** SDK:
 - Client / provider public TypeScript API (where both expose it)
 - Event shapes and classic `onMessage` parity (`docs/EVENTS.md`)
 - Adaptive quality / `capturePriority` behavior (`docs/ADAPTIVE_QUALITY.md`)
-- Shared logic inside `pose-runtime.js` (inference loop, messaging, `__PT_SET_SOURCE` / `__PT_ANALYZE`) — not asset injection
+- Shared logic inside `pose-runtime.js` (inference loop, messaging, `__PT_SET_SOURCE` / `__PT_ANALYZE` / `__PT_PUSH_FRAME`) — not asset injection
+- External frames (`warmupExternal` / `processFrame`, hidden warmer, `__PT_PUSH_FRAME`) — [`EXTERNAL_FRAMES.md`](./EXTERNAL_FRAMES.md). Public recipes: `posetracker-docs/external-frames.mdx`
 
 ## Usually offline-only
 

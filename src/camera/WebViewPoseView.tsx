@@ -366,6 +366,12 @@ export function WebViewPoseView(props: WebViewPoseViewProps): React.ReactElement
         'window.__PT_OPEN_CAMERA && window.__PT_OPEN_CAMERA(); true;',
       );
     });
+    backend.setPushFrameHandler((payload) => {
+      const safe = payload.replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+      webRef.current?.injectJavaScript?.(
+        `window.__PT_PUSH_FRAME && window.__PT_PUSH_FRAME(${safe}); true;`,
+      );
+    });
     // Live downgrades restart getUserMedia without remounting the WebView.
     client.setQualityApplyHandler((next) => {
       injectQuality(webRef, next);
@@ -373,6 +379,7 @@ export function WebViewPoseView(props: WebViewPoseViewProps): React.ReactElement
     return () => {
       backend.setOnPose(undefined);
       backend.setOpenCameraHandler(undefined);
+      backend.setPushFrameHandler(undefined);
       backend.setAttached(false);
       client.setQualityApplyHandler(undefined);
     };

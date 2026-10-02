@@ -58,6 +58,11 @@ import type {
   PoseTrackerStatus,
 } from './types/events';
 import type { Pose } from './types/pose';
+import {
+  isExternalFrame,
+  type ExternalFrame,
+  type ExternalFrameResult,
+} from './types/externalFrame';
 import type { AccelerationDiagnostics, AccelerationState } from './types/acceleration';
 import {
   defaultDiagnosticLogger,
@@ -238,6 +243,16 @@ export class PoseTrackerClient {
   private lastCameraStartInfo: { backend: string; profileId: string | null } | null = null;
   /** Consecutive engine processPose failures (see SESSION_ERROR_STREAK_LIMIT). */
   private sessionErrorStreak = 0;
+
+  /**
+   * External frames (opt-in): the provider mounts a hidden basic warmer only
+   * when this is true. Never set on the default camera path.
+   */
+  private externalWarmerRequested = false;
+  private externalReady = false;
+  private externalInFlight = false;
+  /** Events emitted while one external frame is in flight. */
+  private externalCollector: PoseTrackerEvent[] | null = null;
 
   /** Requested tracking features with WebView-parity defaults applied. */
   private readonly features: ResolvedFeatures;
@@ -1258,18 +1273,92 @@ export class PoseTrackerClient {
     return this.backend.estimatePose(frame);
   }
 
+  // -------------------------------------------------------------------------
+  // External frames (opt-in: the host app owns the camera)
+  // -------------------------------------------------------------------------
+
+  /** True once {@link warmupExternal} was called (provider mounts the warmer). */
+  isExternalWarmerRequested(): boolean {
+    return this.externalWarmerRequested;
+  }
+
   /**
-   * Full pipeline for one camera frame: pose estimation + `keypoints` event
-   * (both modes), then engine processing when a session is active
-   * (full-engine mode). Mode upgrades take effect transparently here.
+   * Load the pose model for {@link processFrame} with external frames. Never
+   * opens the camera. Idempotent. With `PoseTrackerProvider`, a hidden 1×1
+   * basic WebView is mounted for this, unless a `WebViewPoseView` is already
+   * attached, in which case that view is reused.
    */
-  async processFrame(frame: PoseInputFrame): Promise<Pose | null> {
+  async warmupExternal(): Promise<void> {
+    const backend = this.backend;
+    if (!(backend instanceof WebViewPoseBackend)) {
+      throw new Error('warmupExternal() requires the WebView backend (preferredBackend auto or webview).');
+    }
+    if (!this.externalWarmerRequested) {
+      this.externalWarmerRequested = true;
+      this.notifyState();
+    }
+    if (this.preloadPromise) {
+      await this.preloadPromise;
+    } else {
+      await this.preload({ coldStart: 'basic' });
+    }
+    await backend.warmup();
+    this.externalReady = true;
+  }
+
+  /**
+   * External frame (`{ base64 | uri, width, height, timestampMs }`): infer it
+   * on the warm session and run the active exercise engine. Resolves with
+   * the pose and the events this frame produced; those events also reach
+   * the regular listeners. Nothing is drawn. One frame in flight: a call
+   * made while one is running resolves `{ dropped: true }` at once.
+   *
+   * Any other argument keeps the original behaviour: pose estimation +
+   * engine for a backend-specific frame.
+   */
+  processFrame(frame: ExternalFrame): Promise<ExternalFrameResult>;
+  processFrame(frame: PoseInputFrame): Promise<Pose | null>;
+  async processFrame(frame: PoseInputFrame | ExternalFrame): Promise<Pose | null | ExternalFrameResult> {
+    if (isExternalFrame(frame)) {
+      return this.processExternalFrame(frame);
+    }
     const pose = await this.estimatePose(frame);
     if (!pose) {
       return null;
     }
     this.ingestPose(pose);
     return pose;
+  }
+
+  private async processExternalFrame(frame: ExternalFrame): Promise<ExternalFrameResult> {
+    const backend = this.backend;
+    if (!(backend instanceof WebViewPoseBackend)) {
+      throw new Error('processFrame: external frames require the WebView backend.');
+    }
+    if (!this.externalReady || !backend.isWarm()) {
+      throw new Error('processFrame: call warmupExternal() and wait for it to resolve first.');
+    }
+    if (backend.isCameraOpened()) {
+      throw new Error(
+        'processFrame: the SDK camera is open on this client. External frames and the SDK camera cannot run together.',
+      );
+    }
+    if (this.externalInFlight) {
+      return { dropped: true, pose: backend.getLastPose(), events: [] };
+    }
+    this.externalInFlight = true;
+    const events: PoseTrackerEvent[] = [];
+    this.externalCollector = events;
+    try {
+      const result = await backend.pushFrame(frame);
+      if (result.dropped) {
+        return { dropped: true, pose: backend.getLastPose(), events: [] };
+      }
+      return { dropped: false, pose: result.pose, events };
+    } finally {
+      this.externalCollector = null;
+      this.externalInFlight = false;
+    }
   }
 
   /**
@@ -1345,6 +1434,10 @@ export class PoseTrackerClient {
     this.lastCameraStartInfo = null;
     this.featureGateReported = { unsupported: false, freeBlock: false, missingToken: false };
     this.keypointsSuppressionLogged = false;
+    this.externalWarmerRequested = false;
+    this.externalReady = false;
+    this.externalInFlight = false;
+    this.externalCollector = null;
     this.engine = null;
     this.engineSource = null;
     this.manifest = null;
@@ -1391,6 +1484,7 @@ export class PoseTrackerClient {
   }
 
   private emit(event: PoseTrackerEvent): void {
+    this.externalCollector?.push(event);
     // A throwing host listener must never break other listeners or the frame
     // pipeline (emit is called from the per-frame ingest path).
     this.listeners.forEach((l) => {

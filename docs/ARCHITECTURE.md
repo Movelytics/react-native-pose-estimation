@@ -14,6 +14,9 @@ existante (MoveNet TF.js + backend Strapi + configs de mouvements serveur).
 >
 > **Événements temps réel** (init / keypoints / warning / error — parité
 > WebView PoseTracker `sendDataToNative`) : voir [`EVENTS.md`](./EVENTS.md).
+>
+> **Frames externes** (l'app garde la caméra, le SDK renvoie keypoints /
+> posture / counter, rien n'est dessiné) : [`EXTERNAL_FRAMES.md`](./EXTERNAL_FRAMES.md).
 
 ## 1. Vue d'ensemble
 

@@ -104,9 +104,15 @@
     : 'camera';
   var sourceUrl = (typeof CFG.sourceUrl === 'string' && CFG.sourceUrl) ? CFG.sourceUrl : null;
   var imageShotPending = false;
+  /**
+   * Set only while __PT_PUSH_FRAME infers a host-provided frame:
+   * { id, width, height, mirrored, timestampMs }. Keypoints are normalized to
+   * that frame (not to the 1×1 warmer view) and nothing is drawn.
+   */
+  var externalFrame = null;
 
   function activeFrame() {
-    if (sourceMode === 'image' && still) return still;
+    if ((sourceMode === 'image' || externalFrame) && still) return still;
     return video;
   }
 
@@ -781,7 +787,7 @@
     pipeline.setFrame(
       letterbox.vw, letterbox.vh, dispW, dispH,
       letterbox.offsetX, letterbox.offsetY, letterbox.drawW, letterbox.drawH,
-      INPUT_SIZE, FACING === 'user' ? 1 : 0
+      INPUT_SIZE, mirrorOutput() ? 1 : 0
     );
     var meanScore = pipeline.process();
     var outArr = new Float32Array(pipeline.memory.buffer, pipeline.outputPtr, 119);
@@ -847,7 +853,7 @@
     var rnKps = drawKps.map(function (k) {
       var nx = dispW > 0 ? k.dx / dispW : 0;
       var ny = dispH > 0 ? k.dy / dispH : 0;
-      if (FACING === 'user') nx = 1 - nx;
+      if (mirrorOutput()) nx = 1 - nx;
       return {
         name: k.name,
         x: Math.min(1, Math.max(0, nx)),
@@ -912,7 +918,7 @@
       var dy = k.y * scale + oy;
       var nx = dispW > 0 ? dx / dispW : 0;
       var ny = dispH > 0 ? dy / dispH : 0;
-      if (FACING === 'user') nx = 1 - nx;
+      if (mirrorOutput()) nx = 1 - nx;
       scoreSum += k.score;
       if (k.score >= 0.3) above += 1;
       drawKps.push({
@@ -938,13 +944,25 @@
     };
   }
 
+  function outputWidth() {
+    return externalFrame ? externalFrame.width : (canvas.clientWidth || 1);
+  }
+
+  function outputHeight() {
+    return externalFrame ? externalFrame.height : (canvas.clientHeight || 1);
+  }
+
+  function mirrorOutput() {
+    return externalFrame ? externalFrame.mirrored : FACING === 'user';
+  }
+
   function decodeAndPublish(data, inferenceTimeMs) {
     // Pipeline (matches PoseTrackerFront):
     //   MoveNet [0,1] on letterboxed 192² → video pixels → object-fit:cover display
     // Front camera: video+canvas CSS scaleX(-1). Draw in SENSOR display space;
     // flip only the RN payload so host overlays match the mirrored preview.
-    var dispW = canvas.clientWidth || 1;
-    var dispH = canvas.clientHeight || 1;
+    var dispW = outputWidth();
+    var dispH = outputHeight();
     var decoded = pipeline
       ? decodeWithPipeline(data, dispW, dispH)
       : decodeWithJs(data, dispW, dispH);
@@ -952,17 +970,28 @@
   }
 
   function decodeAndPublishBlaze(poses, inferenceTimeMs) {
-    var dispW = canvas.clientWidth || 1;
-    var dispH = canvas.clientHeight || 1;
+    var dispW = outputWidth();
+    var dispH = outputHeight();
     publishDecoded(decodeBlazePoses(poses, dispW, dispH), inferenceTimeMs);
   }
 
   function publishDecoded(decoded, inferenceTimeMs) {
-    var dispW = canvas.clientWidth || 1;
-    var dispH = canvas.clientHeight || 1;
+    var dispW = outputWidth();
+    var dispH = outputHeight();
     var drawKps = decoded.drawKps;
     var meanScore = decoded.meanScore;
     var above = decoded.above;
+    if (externalFrame) {
+      post({
+        type: 'pose',
+        frameId: externalFrame.id,
+        keypoints: decoded.rnKps,
+        score: meanScore,
+        inferenceTimeMs: inferenceTimeMs,
+        timestampMs: externalFrame.timestampMs
+      });
+      return;
+    }
     drawSkeletonDisplay(drawKps, dispW, dispH);
 
     lastInferMs.push(inferenceTimeMs);
@@ -1635,6 +1664,83 @@
     if (sourceMode !== 'image') return;
     imageShotPending = true;
     if (!running) startLoop();
+  };
+
+  function decodeStill(url) {
+    return new Promise(function (resolve, reject) {
+      if (!still) { reject(new Error('still image element missing')); return; }
+      still.onload = null;
+      still.onerror = null;
+      still.src = url;
+      if (typeof still.decode === 'function') {
+        still.decode().then(resolve, function () {
+          reject(new Error('could not decode frame'));
+        });
+        return;
+      }
+      if (still.complete && still.naturalWidth > 0) { resolve(); return; }
+      still.onload = function () { resolve(); };
+      still.onerror = function () { reject(new Error('could not decode frame')); };
+    });
+  }
+
+  /**
+   * Host-owned camera: infer one frame on the warm session without
+   * getUserMedia, without touching the loop and without drawing. Posts
+   * `pose` (with frameId) then `frame_result`. One frame in flight: a frame
+   * pushed while busy is dropped without decoding.
+   */
+  window.__PT_PUSH_FRAME = async function (opts) {
+    opts = opts || {};
+    var id = opts.id;
+    if (!model) {
+      post({ type: 'frame_result', id: id, dropped: false, error: 'pose model is not ready' });
+      return;
+    }
+    if (running || cameraArmed) {
+      post({ type: 'frame_result', id: id, dropped: false, error: 'a camera or media session is running on this page' });
+      return;
+    }
+    if (busy) {
+      post({ type: 'frame_result', id: id, dropped: true });
+      return;
+    }
+    busy = true;
+    try {
+      var url = opts.uri || opts.url || null;
+      if (opts.base64) {
+        url = 'data:' + (opts.mime || 'image/jpeg') + ';base64,' + opts.base64;
+      }
+      if (!url) throw new Error('frame requires base64 or uri');
+      await decodeStill(url);
+      var w = still.naturalWidth || opts.width || 0;
+      var h = still.naturalHeight || opts.height || 0;
+      if (!(w > 0 && h > 0)) throw new Error('frame has no pixels');
+      externalFrame = {
+        id: id,
+        width: w,
+        height: h,
+        mirrored: opts.mirrored !== false,
+        timestampMs: typeof opts.timestampMs === 'number' ? opts.timestampMs : Date.now()
+      };
+      var result = await infer();
+      if (result.kind === 'blazepose') {
+        decodeAndPublishBlaze(result.poses, result.totalMs);
+      } else {
+        decodeAndPublish(result.data, result.totalMs);
+      }
+      post({ type: 'frame_result', id: id, dropped: false });
+    } catch (err) {
+      post({
+        type: 'frame_result',
+        id: id,
+        dropped: false,
+        error: err && err.message ? err.message : String(err)
+      });
+    } finally {
+      externalFrame = null;
+      busy = false;
+    }
   };
 
   window.__PT_OPEN_CAMERA = function () {

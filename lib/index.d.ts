@@ -1,5 +1,5 @@
 /**
- * @posetracker/pose-estimation-react-native — public API surface.
+ * @pose-tracker/react-native-pose-estimation — public API surface.
  *
  * Pose runtime (TF.js + MoveNet + pipeline wasm + page runtime) is **bundled**
  * in the package for instant offline cold start. The movement engine is
@@ -36,7 +36,7 @@ export { DEFAULT_SKELETON_DEFINITION } from './types/skeleton';
 export { fetchSkeletonDefinition, SkeletonFetchError } from './api/skeleton';
 export type { FetchSkeletonOptions } from './api/skeleton';
 export { PoseTrackerProvider, usePoseTracker } from './PoseTrackerProvider';
-export type { PoseTrackerContextValue, PoseTrackerProviderProps } from './PoseTrackerProvider';
+export type { PoseTrackerContextValue, PoseTrackerProviderProps, ProcessFrameFn, } from './PoseTrackerProvider';
 export type { PoseBackend, PoseBackendInitOptions, PoseInputFrame } from './backends/PoseBackend';
 export { WebViewPoseBackend, isWebViewPoseBackend } from './backends/webview/WebViewPoseBackend';
 export type { WebViewPoseBackendOptions, WebViewPoseMessage } from './backends/webview/WebViewPoseBackend';
@@ -75,3 +75,4 @@ export type { PoseTrackerFeatures, ResolvedFeatures } from './types/features';
 export * from './types/events';
 export * from './types/manifest';
 export * from './types/pose';
+export * from './types/externalFrame';

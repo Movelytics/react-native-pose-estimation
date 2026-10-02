@@ -25,8 +25,13 @@ import React, {
   useState,
 } from 'react';
 
+import { StyleSheet, View } from 'react-native';
+
 import { PoseTrackerClient, type PoseTrackerClientOptions, type StartExerciseOptions } from './client';
 import type { PoseInputFrame } from './backends/PoseBackend';
+import { WebViewPoseBackend } from './backends/webview/WebViewPoseBackend';
+import type { WebViewPoseViewProps } from './camera/WebViewPoseView';
+import type { ExternalFrame, ExternalFrameResult } from './types/externalFrame';
 import type { ExerciseConfig, SdkManifest } from './types/manifest';
 import type { PreloadOptions } from './types/preload';
 import type {
@@ -90,7 +95,18 @@ export interface PoseTrackerContextValue {
   startExercise: (exerciseId: string, options?: StartExerciseOptions) => void;
   stopExercise: () => void;
   estimatePose: (frame: PoseInputFrame) => Promise<Pose | null>;
-  processFrame: (frame: PoseInputFrame) => Promise<Pose | null>;
+  /**
+   * Pass `{ base64 | uri, width, height, timestampMs }` from your own camera
+   * after {@link warmupExternal}: resolves `{ dropped, pose, events }`.
+   * Any other frame keeps the original pose + engine behaviour.
+   */
+  processFrame: ProcessFrameFn;
+  /**
+   * Opt-in: load the model for frames from your own camera. Mounts a hidden
+   * 1×1 basic WebView (no camera, nothing drawn). Not needed with
+   * `WebViewPoseView`.
+   */
+  warmupExternal: () => Promise<void>;
   addEventListener: (listener: PoseTrackerEventListener) => () => void;
   /**
    * Classic PoseTracker WebView JSON stream (`sendDataToNative` shape).
@@ -99,6 +115,11 @@ export interface PoseTrackerContextValue {
   addMessageListener: (
     listener: (message: import('./events/classicMessage').ClassicNativeMessage) => void,
   ) => () => void;
+}
+
+export interface ProcessFrameFn {
+  (frame: ExternalFrame): Promise<ExternalFrameResult>;
+  (frame: PoseInputFrame): Promise<Pose | null>;
 }
 
 const PoseTrackerContext = createContext<PoseTrackerContextValue | null>(null);
@@ -143,9 +164,21 @@ export function PoseTrackerProvider({
   const [accelerationDiagnostics, setAccelerationDiagnostics] =
     useState<AccelerationDiagnostics | null>(client.getAccelerationDiagnostics());
   const [quality, setQuality] = useState<QualityState>(client.getQualityState());
+  /** Hidden warmer for external frames; false unless warmupExternal() ran. */
+  const [mountExternalWarmer, setMountExternalWarmer] = useState(false);
 
   useEffect(() => {
     const offState = client.onStateChange(() => {
+      if (client.isExternalWarmerRequested()) {
+        setMountExternalWarmer((mounted) => {
+          if (mounted) return true;
+          const backend = client.getBackend();
+          // Reuse a WebViewPoseView the host already mounted.
+          return backend instanceof WebViewPoseBackend && !backend.isAttached();
+        });
+      } else {
+        setMountExternalWarmer(false);
+      }
       setStatus(client.getStatus());
       setMode(client.getMode());
       setError(client.getError());
@@ -186,9 +219,10 @@ export function PoseTrackerProvider({
     [client],
   );
   const processFrame = useCallback(
-    (frame: PoseInputFrame) => client.processFrame(frame),
+    ((frame: PoseInputFrame) => client.processFrame(frame)) as ProcessFrameFn,
     [client],
   );
+  const warmupExternal = useCallback(() => client.warmupExternal(), [client]);
   const addEventListener = useCallback(
     (listener: PoseTrackerEventListener) => client.addEventListener(listener),
     [client],
@@ -217,6 +251,7 @@ export function PoseTrackerProvider({
       stopExercise,
       estimatePose,
       processFrame,
+      warmupExternal,
       addEventListener,
       addMessageListener,
     }),
@@ -236,13 +271,49 @@ export function PoseTrackerProvider({
       stopExercise,
       estimatePose,
       processFrame,
+      warmupExternal,
       addEventListener,
       addMessageListener,
     ],
   );
 
-  return <PoseTrackerContext.Provider value={value}>{children}</PoseTrackerContext.Provider>;
+  return (
+    <PoseTrackerContext.Provider value={value}>
+      {children}
+      {mountExternalWarmer ? <ExternalFramesWarmer /> : null}
+    </PoseTrackerContext.Provider>
+  );
 }
+
+declare function require(name: string): unknown;
+
+/** Hidden basic page for external frames: no camera, nothing drawn. */
+function ExternalFramesWarmer(): React.JSX.Element {
+  // Required lazily: WebViewPoseView itself imports this module.
+  const { WebViewPoseView } = require('./camera/WebViewPoseView') as {
+    WebViewPoseView: React.ComponentType<WebViewPoseViewProps>;
+  };
+  return (
+    <View pointerEvents="none" style={styles.externalWarmer}>
+      <WebViewPoseView
+        coldStart="basic"
+        drawSkeleton={false}
+        drawPlacementBox={false}
+        showWatermark={false}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  externalWarmer: {
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    opacity: 0,
+    overflow: 'hidden',
+  },
+});
 
 /**
  * Access the PoseTracker pipeline and subscribe to typed events.

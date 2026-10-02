@@ -34,6 +34,7 @@ import type { ColdStartMode, PreloadOptions } from './types/preload';
 import type { SkeletonDefinition } from './types/skeleton';
 import type { ErrorEvent, PoseTrackerEventListener, PoseTrackerMode, PoseTrackerStatus } from './types/events';
 import type { Pose } from './types/pose';
+import { type ExternalFrame, type ExternalFrameResult } from './types/externalFrame';
 import type { AccelerationDiagnostics, AccelerationState } from './types/acceleration';
 import { type QualityState } from './quality/AdaptiveQualityController';
 import { type CapturePriority, type QualityChoice, type QualityProfile } from './quality/profiles';
@@ -162,6 +163,15 @@ export declare class PoseTrackerClient {
     private lastCameraStartInfo;
     /** Consecutive engine processPose failures (see SESSION_ERROR_STREAK_LIMIT). */
     private sessionErrorStreak;
+    /**
+     * External frames (opt-in): the provider mounts a hidden basic warmer only
+     * when this is true. Never set on the default camera path.
+     */
+    private externalWarmerRequested;
+    private externalReady;
+    private externalInFlight;
+    /** Events emitted while one external frame is in flight. */
+    private externalCollector;
     /** Requested tracking features with WebView-parity defaults applied. */
     private readonly features;
     /** WebView-only keys passed by untyped hosts (blazepose, poseEngine, …). */
@@ -352,12 +362,28 @@ export declare class PoseTrackerClient {
     getBackend(): PoseBackend;
     /** Raw pose estimation, no engine involvement. */
     estimatePose(frame: PoseInputFrame): Promise<Pose | null>;
+    /** True once {@link warmupExternal} was called (provider mounts the warmer). */
+    isExternalWarmerRequested(): boolean;
     /**
-     * Full pipeline for one camera frame: pose estimation + `keypoints` event
-     * (both modes), then engine processing when a session is active
-     * (full-engine mode). Mode upgrades take effect transparently here.
+     * Load the pose model for {@link processFrame} with external frames. Never
+     * opens the camera. Idempotent. With `PoseTrackerProvider`, a hidden 1×1
+     * basic WebView is mounted for this, unless a `WebViewPoseView` is already
+     * attached, in which case that view is reused.
      */
+    warmupExternal(): Promise<void>;
+    /**
+     * External frame (`{ base64 | uri, width, height, timestampMs }`): infer it
+     * on the warm session and run the active exercise engine. Resolves with
+     * the pose and the events this frame produced; those events also reach
+     * the regular listeners. Nothing is drawn. One frame in flight: a call
+     * made while one is running resolves `{ dropped: true }` at once.
+     *
+     * Any other argument keeps the original behaviour: pose estimation +
+     * engine for a backend-specific frame.
+     */
+    processFrame(frame: ExternalFrame): Promise<ExternalFrameResult>;
     processFrame(frame: PoseInputFrame): Promise<Pose | null>;
+    private processExternalFrame;
     /**
      * Feed an externally-estimated pose into the pipeline: `keypoints` event
      * (both modes) + engine processing when a session is active. This is how

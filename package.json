@@ -1,6 +1,6 @@
 {
   "name": "@pose-tracker/react-native-pose-estimation",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "Human pose estimation SDK for React Native — fully optimized for iOS & Android (Expo Go). Bundled MoveNet Lightning, free offline keypoints, optional API-key exercise engine (reps, form score, jumps).",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -21,6 +21,7 @@
   "scripts": {
     "build": "node scripts/sync-sdk-version.mjs && tsc -p tsconfig.json && node scripts/copy-bundled-assets.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test \"test/*.test.cjs\"",
     "fetch-model": "node scripts/fetch-model.mjs",
     "build:runtime-payload": "node scripts/build-runtime-payload.mjs",
     "deploy:runtime-payload": "node scripts/build-runtime-payload.mjs --deploy",
