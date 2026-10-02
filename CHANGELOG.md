@@ -8,6 +8,14 @@ Versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.6] — 2026-10-02
+
+### Added
+
+- External frames: `warmupExternal()` and `processFrame()`. The app keeps its own camera. The SDK returns keypoints, placement, and rep events and draws nothing.
+
+Shipped on both `@pose-tracker/react-native-pose-estimation` and `@pose-tracker/react-native-pose-estimation-light`.
+
 ## [0.3.5] — 2026-10-01
 
 ### Changed
