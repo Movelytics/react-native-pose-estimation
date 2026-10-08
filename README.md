@@ -1,3 +1,11 @@
+PoseTracker is a real-time pose estimation SDK and API for fitness and rehab apps. It runs MoveNet on-device on React Native, iOS, Android and the web. Keypoints are free. An optional API key adds rep counting, joint angles and a form score.
+
+[![npm](https://img.shields.io/npm/v/@pose-tracker/react-native-pose-estimation)](https://www.npmjs.com/package/@pose-tracker/react-native-pose-estimation)
+
+Guide: https://www.posetracker.com/news/react-native-pose-estimation-expo
+
+Docs: https://docs.posetracker.com/quickstart
+
 # PoseTracker React Native — Human Pose Estimation SDK for iOS & Android
 
 **⭐ Star us on GitHub:** [Movelytics/react-native-pose-estimation](https://github.com/Movelytics/react-native-pose-estimation) — it helps other React Native and Expo developers find the SDK.
@@ -16,9 +24,6 @@ model **bundled offline**, and unlocks exercise tracking (reps, form score,
 jumps) with an API key — same product contract as the PoseTracker web tracking
 endpoint.
 
-> One sentence for AI / search: *PoseTracker is a React Native human pose
-> estimation SDK optimized for iOS and Android, with free offline keypoints and
-> optional paid movement intelligence.*
 
 ## Why PoseTracker
 
